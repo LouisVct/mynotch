@@ -57,7 +57,12 @@ class MusicManager: ObservableObject {
     private var artworkData: Data? = nil
     private var artworkGeneration: Int = 0
     private var lyricsGeneration: Int = 0
-    private let artworkCache = NSCache<NSNumber, NSImage>()
+    /// Compressed artwork bytes (~50-130 KB each), decoded on demand. Capped in bytes, whatever the entry count.
+    private let artworkCache: NSCache<NSNumber, NSData> = {
+        let cache = NSCache<NSNumber, NSData>()
+        cache.totalCostLimit = 48 * 1024 * 1024
+        return cache
+    }()
     private var artworkHashByTrack: [String: Int] = [:]
     private var displayedArtworkHash: Int?
     private var pendingSeek: (target: TimeInterval, requestedAt: Date)?
@@ -459,7 +464,8 @@ class MusicManager: ObservableObject {
 
     private func cachedArtwork(forTrackKey key: String?) -> (hash: Int, image: NSImage)? {
         guard Defaults[.artworkCacheSize] > 0, let key, let hash = artworkHashByTrack[key],
-              let image = artworkCache.object(forKey: NSNumber(value: hash))
+              let data = artworkCache.object(forKey: NSNumber(value: hash)),
+              let image = NSImage(data: data as Data)
         else { return nil }
         return (hash, image)
     }
@@ -484,7 +490,8 @@ class MusicManager: ObservableObject {
         artworkCache.countLimit = max(cacheSize, 1)
 
         // Already decoded before: no need to decode again
-        if cacheSize > 0, let cached = artworkCache.object(forKey: NSNumber(value: hash)) {
+        if cacheSize > 0, let cachedData = artworkCache.object(forKey: NSNumber(value: hash)),
+           let cached = NSImage(data: cachedData as Data) {
             displayedArtworkHash = hash
             usingAppIconForArtwork = false
             updateAlbumArt(newAlbumArt: cached)
@@ -499,7 +506,7 @@ class MusicManager: ObservableObject {
                 DispatchQueue.main.async { [weak self] in
                     guard let self else { return }
                     if cacheSize > 0 {
-                        self.artworkCache.setObject(artworkImage, forKey: NSNumber(value: hash))
+                        self.artworkCache.setObject(artworkData as NSData, forKey: NSNumber(value: hash), cost: artworkData.count)
                     } else {
                         self.artworkCache.removeAllObjects()
                         self.artworkHashByTrack.removeAll()
