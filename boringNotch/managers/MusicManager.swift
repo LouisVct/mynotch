@@ -57,6 +57,12 @@ class MusicManager: ObservableObject {
     private var artworkData: Data? = nil
     private var artworkGeneration: Int = 0
     private var lyricsGeneration: Int = 0
+    private let artworkCache: NSCache<NSNumber, NSImage> = {
+        let cache = NSCache<NSNumber, NSImage>()
+        cache.countLimit = 30
+        return cache
+    }()
+    private var artworkHashByTrack: [String: Int] = [:]
 
     // Store last values at the time artwork was changed
     private var lastArtworkTitle: String = "I'm Handsome"
@@ -210,8 +216,14 @@ class MusicManager: ObservableObject {
         if hasContentChange {
             self.triggerFlipAnimation()
 
+            let trackKey = Self.artworkTrackKey(bundle: state.bundleIdentifier, artist: state.artist, album: state.album)
             if artworkChanged, let artwork = state.artwork {
-                self.updateArtwork(artwork)
+                self.updateArtwork(artwork, trackKey: trackKey)
+            } else if state.artwork == nil, let cached = self.cachedArtwork(forTrackKey: trackKey) {
+                // Artwork not delivered (yet) but we already know this album's cover
+                self.artworkGeneration &+= 1
+                self.usingAppIconForArtwork = false
+                self.updateAlbumArt(newAlbumArt: cached)
             } else if state.artwork == nil {
                 // Try to use app icon if no artwork but track changed
                 if let appIconImage = AppIconAsNSImage(for: state.bundleIdentifier) {
@@ -426,16 +438,40 @@ class MusicManager: ObservableObject {
         DispatchQueue.main.async(execute: workItem)
     }
 
-    private func updateArtwork(_ artworkData: Data) {
+    // MARK: - Artwork cache
+    private static func artworkTrackKey(bundle: String?, artist: String, album: String) -> String {
+        "\(bundle ?? "")|\(artist)|\(album)"
+    }
+
+    private func cachedArtwork(forTrackKey key: String) -> NSImage? {
+        guard let hash = artworkHashByTrack[key] else { return nil }
+        return artworkCache.object(forKey: NSNumber(value: hash))
+    }
+
+    private func updateArtwork(_ artworkData: Data, trackKey: String) {
         artworkGeneration &+= 1
         let generation = artworkGeneration
+        let hash = artworkData.hashValue
+
+        // Already decoded before: no need to decode again
+        if let cached = artworkCache.object(forKey: NSNumber(value: hash)) {
+            artworkHashByTrack[trackKey] = hash
+            usingAppIconForArtwork = false
+            updateAlbumArt(newAlbumArt: cached)
+            return
+        }
+
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
 
             if let artworkImage = NSImage(data: artworkData) {
                 DispatchQueue.main.async { [weak self] in
+                    guard let self else { return }
+                    self.artworkCache.setObject(artworkImage, forKey: NSNumber(value: hash))
+                    if self.artworkHashByTrack.count > 100 { self.artworkHashByTrack.removeAll() }
+                    self.artworkHashByTrack[trackKey] = hash
                     // Drop results of decodes that finished after a newer track's artwork was requested
-                    guard let self, self.artworkGeneration == generation else { return }
+                    guard self.artworkGeneration == generation else { return }
                     self.usingAppIconForArtwork = false
                     self.updateAlbumArt(newAlbumArt: artworkImage)
                 }
