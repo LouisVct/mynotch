@@ -13,7 +13,7 @@ class ServiceDelegate: NSObject, NSXPCListenerDelegate {
     func listener(_ listener: NSXPCListener, shouldAcceptNewConnection newConnection: NSXPCConnection) -> Bool {
         
         // Only the host app may talk to this helper.
-        newConnection.setCodeSigningRequirement("identifier \"theboringteam.boringnotch\"")
+        newConnection.setCodeSigningRequirement("identifier \"louisvct.mynotch\"")
 
         // Configure the connection.
         // First, set the interface that the exported object implements.
