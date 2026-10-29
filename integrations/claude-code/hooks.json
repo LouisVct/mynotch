@@ -1,16 +1,55 @@
 {
   "hooks": {
     "UserPromptSubmit": [
-      { "hooks": [ { "type": "command", "command": "\"__MYNOTCH_DIR__/notify.sh\" working" } ] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"__MYNOTCH_DIR__/notify.sh\" working"
+          }
+        ]
+      }
     ],
     "Notification": [
-      { "hooks": [ { "type": "command", "command": "\"__MYNOTCH_DIR__/notify.sh\" input" } ] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"__MYNOTCH_DIR__/notify.sh\" input"
+          }
+        ]
+      }
     ],
     "Stop": [
-      { "hooks": [ { "type": "command", "command": "\"__MYNOTCH_DIR__/notify.sh\" done" } ] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"__MYNOTCH_DIR__/notify.sh\" done"
+          }
+        ]
+      }
     ],
     "SessionEnd": [
-      { "hooks": [ { "type": "command", "command": "\"__MYNOTCH_DIR__/notify.sh\" end" } ] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"__MYNOTCH_DIR__/notify.sh\" end"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"__MYNOTCH_DIR__/notify.sh\" working"
+          }
+        ]
+      }
     ]
   }
 }

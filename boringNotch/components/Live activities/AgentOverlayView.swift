@@ -2,34 +2,95 @@
 //  AgentOverlayView.swift
 //  boringNotch
 //
-//  Pills shown under the closed notch: Pomodoro countdown, running AI agents,
-//  agent alert banner and the expandable session list.
+//  Live activities for AI agents and the Pomodoro timer:
+//  - badge / timer shown inside the closed notch (left / right of the camera cutout)
+//  - banners and session list shown under the notch
 //
 
 import Defaults
 import SwiftUI
 
+// MARK: - Inside the closed notch
+
+/// Status of the running agents, shown on the left of the notch when music isn't using that slot.
+struct AgentBadge: View {
+    @ObservedObject var agents = AgentSessionManager.shared
+
+    private var needsInput: Bool { agents.sessions.contains { $0.state == .needsInput } }
+
+    var body: some View {
+        HStack(spacing: 2) {
+            if needsInput {
+                Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.orange)
+            } else if agents.workingCount > 0 {
+                ProgressView().controlSize(.mini).scaleEffect(0.75)
+            } else {
+                Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+            }
+            if agents.sessions.count > 1 {
+                Text("\(agents.sessions.count)")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+            }
+        }
+        .font(.system(size: 13))
+        .contentShape(Rectangle())
+        .onTapGesture {
+            withAnimation(.smooth) { agents.isListExpanded.toggle() }
+        }
+        .help("AI agents")
+    }
+}
+
+/// Pomodoro countdown, shown on the right of the notch in place of the music visualizer.
+struct PomodoroTimerLabel: View {
+    @ObservedObject var pomodoro = PomodoroManager.shared
+
+    var body: some View {
+        Group {
+            if pomodoro.runState == .running, let end = pomodoro.endDate {
+                Text(timerInterval: Date()...max(end, Date().addingTimeInterval(1)), countsDown: true, showsHours: false)
+            } else {
+                Text(Duration.seconds(pomodoro.remainingWhenPaused).formatted(.time(pattern: .minuteSecond)))
+                    .opacity(0.6)
+            }
+        }
+        .monospacedDigit()
+        .font(.system(size: 12, weight: .semibold, design: .rounded))
+        .foregroundStyle(pomodoro.phase == .work ? Color.red : Color.green)
+        .lineLimit(1)
+        .contentShape(Rectangle())
+        .contextMenu { PomodoroMenuItems(pomodoro: pomodoro) }
+    }
+}
+
+// MARK: - Under the notch
+
 struct AgentOverlayView: View {
     @EnvironmentObject var vm: BoringViewModel
     @ObservedObject var coordinator = BoringViewCoordinator.shared
     @ObservedObject var agents = AgentSessionManager.shared
-    @ObservedObject var pomodoro = PomodoroManager.shared
+    @ObservedObject var music = MusicManager.shared
+
+    /// When music owns the left slot of the notch, agents get a small pill under it instead.
+    private var musicUsesLeftSlot: Bool {
+        (music.isPlaying || !music.isPlayerIdle) && coordinator.musicLiveActivityEnabled
+    }
 
     var body: some View {
         VStack(spacing: 6) {
-            if let alert = coordinator.agentAlert {
-                AgentAlertBanner(alert: alert) { coordinator.dismissAgentAlert() }
-                    .transition(.move(edge: .top).combined(with: .opacity))
-            } else if pomodoro.isActive || !agents.sessions.isEmpty {
-                HStack(spacing: 6) {
-                    if pomodoro.isActive {
-                        PomodoroChip(pomodoro: pomodoro)
-                    }
-                    if !agents.sessions.isEmpty {
-                        AgentChip(agents: agents)
-                    }
-                }
-                .transition(.opacity)
+            ForEach(coordinator.agentAlerts) { alert in
+                AgentAlertBanner(
+                    alert: alert,
+                    onOpen: { coordinator.openAgentAlert(alert) },
+                    onDismiss: { coordinator.dismissAgentAlert(alert.id) }
+                )
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+
+            if coordinator.agentAlerts.isEmpty && musicUsesLeftSlot && !agents.sessions.isEmpty {
+                AgentPill(agents: agents)
+                    .transition(.opacity)
             }
 
             if agents.isListExpanded && !agents.sessions.isEmpty {
@@ -38,62 +99,29 @@ struct AgentOverlayView: View {
             }
         }
         .padding(.top, vm.effectiveClosedNotchHeight + 10)
-        .animation(.smooth, value: coordinator.agentAlert)
+        .animation(.smooth, value: coordinator.agentAlerts)
+        .animation(.smooth, value: agents.sessions)
     }
 }
 
-private struct PomodoroChip: View {
-    @ObservedObject var pomodoro: PomodoroManager
-
-    var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: pomodoro.phase == .work ? "timer" : "cup.and.saucer.fill")
-                .foregroundStyle(pomodoro.phase == .work ? Color.red : Color.green)
-            if pomodoro.runState == .running, let end = pomodoro.endDate {
-                Text(timerInterval: Date()...max(end, Date().addingTimeInterval(1)), countsDown: true)
-                    .monospacedDigit()
-            } else {
-                Text(Duration.seconds(pomodoro.remainingWhenPaused).formatted(.time(pattern: .minuteSecond)))
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .font(.system(size: 11, weight: .semibold))
-        .foregroundStyle(.white)
-        .chipBackground()
-        .onTapGesture { pomodoro.toggle() }
-        .contextMenu { PomodoroMenuItems(pomodoro: pomodoro) }
-    }
-}
-
-private struct AgentChip: View {
+private struct AgentPill: View {
     @ObservedObject var agents: AgentSessionManager
 
-    private var needsInput: Bool { agents.sessions.contains { $0.state == .needsInput } }
-
     var body: some View {
         HStack(spacing: 6) {
-            if needsInput {
-                Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.orange)
-            } else if agents.workingCount > 0 {
-                ProgressView().controlSize(.mini).scaleEffect(0.8)
-            } else {
-                Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-            }
-
-            if agents.sessions.count > 1 {
-                Text("\(agents.sessions.count) agents")
-            } else if let session = agents.sessions.first {
-                Text(session.name)
-            }
-
-            if let since = agents.earliestWorkStart, !needsInput {
+            AgentBadge(agents: agents)
+            Text(agents.sessions.count > 1 ? "\(agents.sessions.count) agents" : (agents.sessions.first?.name ?? ""))
+            if let since = agents.earliestWorkStart {
                 Text(since, style: .timer).monospacedDigit().foregroundStyle(.secondary)
             }
         }
         .font(.system(size: 11, weight: .semibold))
         .foregroundStyle(.white)
-        .chipBackground()
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(.black, in: Capsule())
+        .overlay(Capsule().stroke(Color.white.opacity(0.12)))
+        .contentShape(Capsule())
         .onTapGesture {
             withAnimation(.smooth) { agents.isListExpanded.toggle() }
         }
@@ -104,7 +132,7 @@ private struct AgentSessionListView: View {
     @ObservedObject var agents: AgentSessionManager
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 2) {
             ForEach(agents.sessions) { session in
                 HStack(spacing: 8) {
                     switch session.state {
@@ -123,23 +151,18 @@ private struct AgentSessionListView: View {
                         Text(session.workingSince, style: .timer)
                             .monospacedDigit().font(.system(size: 10)).foregroundStyle(.white.opacity(0.6))
                     }
-                    if session.terminalBundleID != nil {
-                        Button {
-                            AgentTerminal.activate(bundleID: session.terminalBundleID)
-                        } label: {
-                            Image(systemName: "terminal")
-                        }
-                        .buttonStyle(.plain)
-                        .help("Go to terminal")
-                    }
                     Button {
                         agents.end(id: session.id)
                     } label: {
-                        Image(systemName: "xmark").font(.system(size: 9))
+                        Image(systemName: "xmark").font(.system(size: 9)).padding(4)
                     }
                     .buttonStyle(.plain)
                     .foregroundStyle(.white.opacity(0.4))
                 }
+                .padding(.vertical, 3)
+                .contentShape(Rectangle())
+                // Tap a row to jump to the window hosting that session
+                .onTapGesture { AgentTerminal.activate(bundleID: session.terminalBundleID) }
             }
         }
         .foregroundStyle(.white)
@@ -151,18 +174,9 @@ private struct AgentSessionListView: View {
     }
 }
 
-private extension View {
-    func chipBackground() -> some View {
-        self
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(.black, in: Capsule())
-            .overlay(Capsule().stroke(Color.white.opacity(0.12)))
-            .contentShape(Capsule())
-    }
-}
+// MARK: - Pomodoro menu
 
-/// Context menu shared by the header button and the pill under the closed notch.
+/// Context menu shared by the header button and the timer in the notch.
 struct PomodoroMenuItems: View {
     @ObservedObject var pomodoro: PomodoroManager
 

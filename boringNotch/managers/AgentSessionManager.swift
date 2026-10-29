@@ -69,6 +69,20 @@ final class AgentSessionManager: ObservableObject {
             }
         }
         startPruning()
+
+        // Like a Live Activity, a finished session fades out by itself
+        if state == .done {
+            let marker = now
+            Task { [weak self] in
+                try? await Task.sleep(for: .seconds(15))
+                await MainActor.run {
+                    guard let self,
+                          let current = self.sessions.first(where: { $0.id == id }),
+                          current.state == .done, current.updatedAt == marker else { return }
+                    self.end(id: id)
+                }
+            }
+        }
     }
 
     func end(id: String) {

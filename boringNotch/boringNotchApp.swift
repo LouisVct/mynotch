@@ -322,7 +322,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 name: name,
                 message: message ?? (state == "done" ? "Finished" : "Needs your attention"),
                 kind: state == "done" ? .done : .needsInput,
-                terminalBundleID: terminal)
+                terminalBundleID: terminal,
+                sessionID: session)
         }
     }
 

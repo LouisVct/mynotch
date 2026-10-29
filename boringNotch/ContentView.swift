@@ -25,6 +25,8 @@ struct ContentView: View {
     @ObservedObject var volumeManager = VolumeManager.shared
     @State private var hoverTask: Task<Void, Never>?
     @State private var mediaSwipeFired = false
+    @ObservedObject var pomodoro = PomodoroManager.shared
+    @ObservedObject var agentSessions = AgentSessionManager.shared
     @State private var isHovering: Bool = false
     @State private var anyDropDebounceTask: Task<Void, Never>?
 
@@ -59,6 +61,16 @@ struct ContentView: View {
         )
     }
 
+    /// Width of each side slot of the closed notch (equal on both sides to stay centered on the cutout).
+    /// The Pomodoro countdown needs more room than the music visualizer.
+    private var activitySlotWidth: CGFloat {
+        max(0, vm.effectiveClosedNotchHeight - 12) + (pomodoro.isActive ? 34 : 0)
+    }
+
+    private var hasClosedActivity: Bool {
+        pomodoro.isActive || !agentSessions.sessions.isEmpty
+    }
+
     private var computedChinWidth: CGFloat {
         var chinWidth: CGFloat = vm.closedNotchSize.width
 
@@ -70,7 +82,11 @@ struct ContentView: View {
             && vm.notchState == .closed && (musicManager.isPlaying || !musicManager.isPlayerIdle)
             && coordinator.musicLiveActivityEnabled && !vm.hideOnClosed
         {
-            chinWidth += (2 * max(0, vm.effectiveClosedNotchHeight - 12) + 20)
+            chinWidth += (2 * activitySlotWidth + 20)
+        } else if vm.notchState == .closed && !vm.hideOnClosed && !coordinator.expandingView.show
+            && hasClosedActivity
+        {
+            chinWidth += (2 * activitySlotWidth + 20)
         } else if !coordinator.expandingView.show && vm.notchState == .closed
             && (!musicManager.isPlaying && musicManager.isPlayerIdle) && Defaults[.showNotHumanFace]
             && !vm.hideOnClosed
@@ -305,6 +321,9 @@ struct ContentView: View {
                       } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music) && vm.notchState == .closed && (musicManager.isPlaying || !musicManager.isPlayerIdle) && coordinator.musicLiveActivityEnabled && !vm.hideOnClosed {
                           MusicLiveActivity()
                               .frame(alignment: .center)
+                      } else if vm.notchState == .closed && !coordinator.expandingView.show && hasClosedActivity && !vm.hideOnClosed {
+                          ClosedActivityRow()
+                              .frame(alignment: .center)
                       } else if !coordinator.expandingView.show && vm.notchState == .closed && (!musicManager.isPlaying && musicManager.isPlayerIdle) && Defaults[.showNotHumanFace] && !vm.hideOnClosed  {
                           BoringFaceAnimation()
                        } else if vm.notchState == .open {
@@ -379,6 +398,31 @@ struct ContentView: View {
         .onDrop(of: [.fileURL, .url, .utf8PlainText, .plainText, .data], delegate: GeneralDropTargetDelegate(isTargeted: $vm.generalDropTargeting))
     }
 
+    /// Agents on the left, Pomodoro on the right, around the camera cutout (like iPhone live activities).
+    @ViewBuilder
+    func ClosedActivityRow() -> some View {
+        HStack(spacing: 0) {
+            HStack {
+                if !agentSessions.sessions.isEmpty {
+                    AgentBadge()
+                }
+            }
+            .frame(width: activitySlotWidth, alignment: .center)
+
+            Rectangle()
+                .fill(.black)
+                .frame(width: vm.closedNotchSize.width - cornerRadiusInsets.closed.top)
+
+            HStack {
+                if pomodoro.isActive {
+                    PomodoroTimerLabel()
+                }
+            }
+            .frame(width: activitySlotWidth, alignment: .center)
+        }
+        .frame(height: vm.effectiveClosedNotchHeight, alignment: .center)
+    }
+
     @ViewBuilder
     func BoringFaceAnimation() -> some View {
         HStack {
@@ -415,6 +459,7 @@ struct ContentView: View {
                     width: max(0, vm.effectiveClosedNotchHeight - 12),
                     height: max(0, vm.effectiveClosedNotchHeight - 12)
                 )
+                .frame(width: activitySlotWidth, alignment: .leading)
 
             Rectangle()
                 .fill(.black)
@@ -464,7 +509,9 @@ struct ContentView: View {
                 )
 
             HStack {
-                if useMusicVisualizer {
+                if pomodoro.isActive {
+                    PomodoroTimerLabel()
+                } else if useMusicVisualizer {
                     Rectangle()
                         .fill(
                             Defaults[.coloredSpectrogram]
@@ -485,7 +532,7 @@ struct ContentView: View {
             .frame(
                 width: max(
                     0,
-                    vm.effectiveClosedNotchHeight - 12
+                    activitySlotWidth
                         + gestureProgress / 2
                 ),
                 height: max(

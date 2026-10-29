@@ -16,10 +16,13 @@ struct AgentAlert: Identifiable, Equatable {
     let message: String
     let kind: Kind
     var terminalBundleID: String? = nil
+    var sessionID: String? = nil
 }
 
 struct AgentAlertBanner: View {
     let alert: AgentAlert
+    /// Tap on the banner: jump to the app hosting the agent and close the banner
+    let onOpen: () -> Void
     let onDismiss: () -> Void
 
     var body: some View {
@@ -37,20 +40,14 @@ struct AgentAlertBanner: View {
                     .lineLimit(2)
             }
             Spacer(minLength: 0)
-            if alert.terminalBundleID != nil {
-                Button {
-                    AgentTerminal.activate(bundleID: alert.terminalBundleID)
-                    onDismiss()
-                } label: {
-                    Image(systemName: "terminal")
-                        .foregroundStyle(.white)
-                }
-                .buttonStyle(.plain)
-                .help("Go to terminal")
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.5))
+                    .padding(6)
+                    .contentShape(Rectangle())
             }
-            Image(systemName: "xmark")
-                .font(.caption2)
-                .foregroundStyle(.white.opacity(0.4))
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
@@ -59,6 +56,6 @@ struct AgentAlertBanner: View {
         .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(Color.white.opacity(0.12)))
         .shadow(color: .black.opacity(0.5), radius: 8, y: 2)
         .contentShape(Rectangle())
-        .onTapGesture(perform: onDismiss)
+        .onTapGesture(perform: onOpen)
     }
 }

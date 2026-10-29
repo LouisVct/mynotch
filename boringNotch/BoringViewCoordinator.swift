@@ -52,8 +52,8 @@ class BoringViewCoordinator: ObservableObject {
 
     @Published var currentView: NotchViews = .home
     @Published var helloAnimationRunning: Bool = false
-    @Published var agentAlert: AgentAlert?
-    private var agentAlertTask: Task<Void, Never>?
+    @Published var agentAlerts: [AgentAlert] = []
+    private var agentAlertTasks: [UUID: Task<Void, Never>] = [:]
     private var sneakPeekDispatch: DispatchWorkItem?
     private var expandingViewDispatch: DispatchWorkItem?
     private var hudEnableTask: Task<Void, Never>?
@@ -237,31 +237,53 @@ class BoringViewCoordinator: ObservableObject {
     // MARK: - Agent alerts (mynotch://agent?name=...&message=...&state=input|done)
     func showAgentAlert(
         name: String, message: String, kind: AgentAlert.Kind,
-        terminalBundleID: String? = nil, force: Bool = false
+        terminalBundleID: String? = nil, sessionID: String? = nil, force: Bool = false
     ) {
         guard force || Defaults[.agentAlertsEnabled] else { return }
         let alert = AgentAlert(
             name: String(name.prefix(40)),
             message: String(message.prefix(140)),
             kind: kind,
-            terminalBundleID: terminalBundleID
+            terminalBundleID: terminalBundleID,
+            sessionID: sessionID
         )
-        withAnimation(.smooth) { agentAlert = alert }
 
-        agentAlertTask?.cancel()
-        agentAlertTask = Task { [weak self] in
+        withAnimation(.smooth) {
+            // One banner per session: the newest replaces the previous one
+            if let sessionID, let old = agentAlerts.first(where: { $0.sessionID == sessionID }) {
+                removeAgentAlert(old.id)
+            }
+            agentAlerts.append(alert)
+            // Keep at most 3 banners on screen
+            while agentAlerts.count > 3 { removeAgentAlert(agentAlerts[0].id) }
+        }
+
+        agentAlertTasks[alert.id] = Task { [weak self] in
             // Alerts that need input stay longer than "done" notices
             try? await Task.sleep(for: .seconds(kind == .needsInput ? 30 : 8))
             guard !Task.isCancelled else { return }
-            await MainActor.run {
-                withAnimation(.smooth) { self?.agentAlert = nil }
-            }
+            await MainActor.run { self?.dismissAgentAlert(alert.id) }
         }
     }
 
-    func dismissAgentAlert() {
-        agentAlertTask?.cancel()
-        withAnimation(.smooth) { agentAlert = nil }
+    private func removeAgentAlert(_ id: UUID) {
+        agentAlertTasks[id]?.cancel()
+        agentAlertTasks[id] = nil
+        agentAlerts.removeAll { $0.id == id }
+    }
+
+    func dismissAgentAlert(_ id: UUID) {
+        withAnimation(.smooth) { removeAgentAlert(id) }
+    }
+
+    /// Tap on a banner: bring the agent's app forward and close the banner.
+    func openAgentAlert(_ alert: AgentAlert) {
+        AgentTerminal.activate(bundleID: alert.terminalBundleID)
+        dismissAgentAlert(alert.id)
+        // A finished session has nothing more to show once the user went back to it
+        if alert.kind == .done, let sessionID = alert.sessionID {
+            AgentSessionManager.shared.end(id: sessionID)
+        }
     }
     private var sneakPeekTask: Task<Void, Never>?
 

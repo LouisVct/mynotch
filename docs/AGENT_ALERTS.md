@@ -46,16 +46,24 @@ Pour les installer dans `~/.claude/settings.json` (sans toucher au reste, sans d
 | `Notification`     | `input`     | bannière orange                        |
 | `Stop`             | `done`      | bannière verte                         |
 | `SessionEnd`       | `end`       | la session quitte la liste             |
+| `PostToolUse`      | `working`   | repasse en « travail » après une permission accordée (~0,1 s de surcoût par outil ; retire ce hook si ça te gêne) |
+
+La notification « Claude is waiting for your input » (60 s après la fin) est ignorée : la bannière « terminé » suffit.
 
 `notify.sh` lit le JSON du hook, retrouve l'app hôte avec `__CFBundleIdentifier` (ou `TERM_PROGRAM`)
 et ne fait jamais échouer le hook. Les hooks pointent vers le script du repo : si tu déplaces le dossier,
 relance `install.sh`.
 
-## Pomodoro
+## Dans l'encoche fermée (façon Live Activity iPhone)
 
-Bouton minuteur dans l'encoche ouverte (clic = démarrer / pause, clic droit = passer / réinitialiser),
-ou via le menu de la barre des menus. Pendant un cycle, un compte à rebours reste sous l'encoche fermée
-(clic = pause, clic droit = passer / réinitialiser). Durées et options dans Réglages > General > Pomodoro.
+- **Minuteur Pomodoro** : à droite du cran, à la place des barres de musique. Clic droit = pause, durées, passer, réinitialiser.
+- **Agents** : à gauche du cran (spinner = travail, point d'exclamation orange = t'attend, coche verte = terminé, nombre = plusieurs sessions).
+  Si la musique occupe la gauche, une petite pastille « N agents » apparaît sous l'encoche.
+- Un clic sur le badge ou la pastille ouvre la liste des sessions ; un clic sur une ligne ramène à la fenêtre de la session.
+- Plusieurs sessions : une bannière par session (3 maximum). Un clic sur une bannière ramène à la fenêtre et la ferme ;
+  la croix la ferme seulement. Une session terminée disparaît d'elle-même après 15 s.
+
+Durées du Pomodoro : clic droit sur le minuteur, ou Réglages > General > Pomodoro.
 
 ## Autres agents (agy, etc.)
 
