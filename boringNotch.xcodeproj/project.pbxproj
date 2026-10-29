@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AA00000000000000000000B7 /* AgentOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000000F7 /* AgentOverlayView.swift */; };
+		AA00000000000000000000B6 /* PomodoroManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000000F6 /* PomodoroManager.swift */; };
+		AA00000000000000000000B5 /* AgentSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000000F5 /* AgentSessionManager.swift */; };
 		AA00000000000000000000B4 /* AgentAlertBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000000F4 /* AgentAlertBanner.swift */; };
 		AA00000000000000000000B3 /* ConversionOfferView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000000F3 /* ConversionOfferView.swift */; };
 		AA00000000000000000000B2 /* FileConversionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000000F2 /* FileConversionService.swift */; };
@@ -185,6 +188,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		AA00000000000000000000F7 /* AgentOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentOverlayView.swift; sourceTree = "<group>"; };
+		AA00000000000000000000F6 /* PomodoroManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroManager.swift; sourceTree = "<group>"; };
+		AA00000000000000000000F5 /* AgentSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentSessionManager.swift; sourceTree = "<group>"; };
 		AA00000000000000000000F4 /* AgentAlertBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentAlertBanner.swift; sourceTree = "<group>"; };
 		AA00000000000000000000F3 /* ConversionOfferView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversionOfferView.swift; sourceTree = "<group>"; };
 		AA00000000000000000000F2 /* FileConversionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileConversionService.swift; sourceTree = "<group>"; };
@@ -524,6 +530,8 @@
 				F38DE6472D8243E2008B5C6D /* BatteryActivityManager.swift */,
 				112FB7342CCF16F70015238C /* NotchSpaceManager.swift */,
 				147163992C5D35FF0068B555 /* MusicManager.swift */,
+				AA00000000000000000000F6 /* PomodoroManager.swift */,
+				AA00000000000000000000F5 /* AgentSessionManager.swift */,
 				149E0B962C737D00006418B1 /* WebcamManager.swift */,
 				14C08BB52C8DE42D000F8AA0 /* CalendarManager.swift */,
 				B1F0A0012E60000100000001 /* BrightnessManager.swift */,
@@ -744,6 +752,7 @@
 				115C12EB2ED3D003009754CA /* OpenNotchHUD.swift */,
 				14D570CC2C5F4BB70011E668 /* BoringBattery.swift */,
 				AA00000000000000000000F4 /* AgentAlertBanner.swift */,
+				AA00000000000000000000F7 /* AgentOverlayView.swift */,
 				B1C974332C642B6D0000E707 /* MarqueeTextView.swift */,
 				B1D365CD2C6A979C0047BDBC /* LiveActivityModifier.swift */,
 				B1D365CF2C6A9A6C0047BDBC /* SystemEventIndicatorModifier.swift */,
@@ -966,6 +975,8 @@
 				14C08BC12C8E03AD000F8AA0 /* NSImage+Extensions.swift in Sources */,
 				149E0B9A2C737D40006418B1 /* WebcamView.swift in Sources */,
 				1471639A2C5D35FF0068B555 /* MusicManager.swift in Sources */,
+				AA00000000000000000000B6 /* PomodoroManager.swift in Sources */,
+				AA00000000000000000000B5 /* AgentSessionManager.swift in Sources */,
 				B1B112932C6A577E00093D8F /* MouseTracker.swift in Sources */,
 				AA00000000000000000000B1 /* MenuBarEntryTracker.swift in Sources */,
 				B1C448962C9712C4001F0858 /* ActionBar.swift in Sources */,
@@ -991,6 +1002,7 @@
 				14C08BB62C8DE42D000F8AA0 /* CalendarManager.swift in Sources */,
 				14D570CD2C5F4BB70011E668 /* BoringBattery.swift in Sources */,
 				AA00000000000000000000B4 /* AgentAlertBanner.swift in Sources */,
+				AA00000000000000000000B7 /* AgentOverlayView.swift in Sources */,
 				B10F84A32C6C9596009F3026 /* TestView.swift in Sources */,
 				1443E7F32C609DCE0027C1FC /* matters.swift in Sources */,
 				11C5E3162DFE88510065821E /* SettingsView.swift in Sources */,

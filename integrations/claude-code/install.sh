@@ -1,31 +1,37 @@
 #!/usr/bin/env bash
-# Adds the MyNotch alert hooks to ~/.claude/settings.json (keeps existing settings and hooks).
-# Safe to run several times: hooks already containing "mynotch://agent" are not added twice.
+# Adds the MyNotch hooks to ~/.claude/settings.json (keeps all other settings and hooks).
+# Safe to run several times: older MyNotch hooks are replaced, never duplicated.
 set -euo pipefail
 
+DIR="$(cd "$(dirname "$0")" && pwd)"
 SETTINGS="${CLAUDE_SETTINGS:-$HOME/.claude/settings.json}"
-HOOKS="$(cd "$(dirname "$0")" && pwd)/hooks.json"
 
 mkdir -p "$(dirname "$SETTINGS")"
 [ -f "$SETTINGS" ] || echo '{}' > "$SETTINGS"
 cp "$SETTINGS" "$SETTINGS.bak-mynotch"
 
-python3 - "$SETTINGS" "$HOOKS" <<'PY'
+python3 - "$SETTINGS" "$DIR" <<'PY'
 import json, sys
 
-settings_path, hooks_path = sys.argv[1], sys.argv[2]
+settings_path, directory = sys.argv[1], sys.argv[2]
 settings = json.load(open(settings_path))
-wanted = json.load(open(hooks_path))["hooks"]
+wanted = json.loads(open(f"{directory}/hooks.json").read().replace("__MYNOTCH_DIR__", directory))["hooks"]
 
-existing = settings.setdefault("hooks", {})
+def is_mynotch(entry):
+    return any("mynotch://agent" in h.get("command", "") or "claude-code/notify.sh" in h.get("command", "")
+               for h in entry.get("hooks", []))
+
+hooks = settings.setdefault("hooks", {})
+# Drop previous MyNotch entries (including the first, link-only version), then add the current ones
+for event in list(hooks):
+    hooks[event] = [e for e in hooks[event] if not is_mynotch(e)]
+    if not hooks[event]:
+        del hooks[event]
 for event, entries in wanted.items():
-    current = existing.setdefault(event, [])
-    already = any("mynotch://agent" in h.get("command", "")
-                  for e in current for h in e.get("hooks", []))
-    if not already:
-        current.extend(entries)
+    hooks.setdefault(event, []).extend(entries)
 
-json.dump(settings, open(settings_path, "w"), indent=2, ensure_ascii=False)
-open(settings_path, "a").write("\n")
+with open(settings_path, "w") as f:
+    json.dump(settings, f, indent=2, ensure_ascii=False)
+    f.write("\n")
 print(f"MyNotch hooks installed in {settings_path} (backup: {settings_path}.bak-mynotch)")
 PY

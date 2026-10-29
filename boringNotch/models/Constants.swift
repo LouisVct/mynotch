@@ -133,6 +133,13 @@ extension Defaults.Keys {
     static let offerConversionOnDrop = Key<Bool>("offerConversionOnDrop", default: true)
     static let mediaSwipeGestures = Key<Bool>("mediaSwipeGestures", default: true)
     static let agentAlertsEnabled = Key<Bool>("agentAlertsEnabled", default: true)
+    static let pomodoroWorkMinutes = Key<Int>("pomodoroWorkMinutes", default: 25)
+    static let pomodoroShortBreakMinutes = Key<Int>("pomodoroShortBreakMinutes", default: 5)
+    static let pomodoroLongBreakMinutes = Key<Int>("pomodoroLongBreakMinutes", default: 15)
+    static let pomodoroCyclesBeforeLongBreak = Key<Int>("pomodoroCyclesBeforeLongBreak", default: 4)
+    static let pomodoroAutoStartNext = Key<Bool>("pomodoroAutoStartNext", default: false)
+    static let pomodoroSound = Key<Bool>("pomodoroSound", default: true)
+    static let showPomodoroButton = Key<Bool>("showPomodoroButton", default: true)
     static let artworkCacheSize = Key<Int>("artworkCacheSize", default: 30)
     static let musicControlSlots = Key<[MusicControlButton]>(
         "musicControlSlots",

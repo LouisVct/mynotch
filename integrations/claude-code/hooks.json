@@ -1,24 +1,16 @@
 {
   "hooks": {
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "command", "command": "\"__MYNOTCH_DIR__/notify.sh\" working" } ] }
+    ],
     "Notification": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "open -g 'mynotch://agent?name=Claude%20Code&message=Needs%20your%20attention&state=input'"
-          }
-        ]
-      }
+      { "hooks": [ { "type": "command", "command": "\"__MYNOTCH_DIR__/notify.sh\" input" } ] }
     ],
     "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "open -g 'mynotch://agent?name=Claude%20Code&message=Finished&state=done'"
-          }
-        ]
-      }
+      { "hooks": [ { "type": "command", "command": "\"__MYNOTCH_DIR__/notify.sh\" done" } ] }
+    ],
+    "SessionEnd": [
+      { "hooks": [ { "type": "command", "command": "\"__MYNOTCH_DIR__/notify.sh\" end" } ] }
     ]
   }
 }

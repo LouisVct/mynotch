@@ -15,6 +15,7 @@ struct AgentAlert: Identifiable, Equatable {
     let name: String
     let message: String
     let kind: Kind
+    var terminalBundleID: String? = nil
 }
 
 struct AgentAlertBanner: View {
@@ -36,6 +37,17 @@ struct AgentAlertBanner: View {
                     .lineLimit(2)
             }
             Spacer(minLength: 0)
+            if alert.terminalBundleID != nil {
+                Button {
+                    AgentTerminal.activate(bundleID: alert.terminalBundleID)
+                    onDismiss()
+                } label: {
+                    Image(systemName: "terminal")
+                        .foregroundStyle(.white)
+                }
+                .buttonStyle(.plain)
+                .help("Go to terminal")
+            }
             Image(systemName: "xmark")
                 .font(.caption2)
                 .foregroundStyle(.white.opacity(0.4))

@@ -36,6 +36,15 @@ struct DynamicNotchApp: App {
                 }
             }
             .keyboardShortcut(KeyEquivalent(","), modifiers: .command)
+            Button("Start / pause Pomodoro") {
+                PomodoroManager.shared.toggle()
+            }
+            Button("Skip Pomodoro phase") {
+                PomodoroManager.shared.skip()
+            }
+            Button("Reset Pomodoro") {
+                PomodoroManager.shared.reset()
+            }
             Divider()
             Button("Restart Boring Notch") {
                 ApplicationRelauncher.restart()
@@ -289,11 +298,31 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             components.queryItems?.first(where: { $0.name == name })?.value
         }
         let name = value("name") ?? "AI agent"
-        let message = value("message") ?? "Needs your attention"
-        let kind: AgentAlert.Kind = value("state") == "done" ? .done : .needsInput
+        let message = value("message")
+        let state = value("state") ?? "input"
+        let session = value("session").map { String($0.prefix(80)) }
+        let project = String((value("project") ?? "").prefix(60))
+        let terminal = value("terminal").map { String($0.prefix(120)) }
 
         Task { @MainActor in
-            BoringViewCoordinator.shared.showAgentAlert(name: name, message: message, kind: kind)
+            if let session {
+                if state == "end" {
+                    AgentSessionManager.shared.end(id: session)
+                    return
+                }
+                let sessionState: AgentSession.State =
+                    state == "working" ? .working : state == "done" ? .done : .needsInput
+                AgentSessionManager.shared.update(
+                    id: session, name: String(name.prefix(40)), project: project,
+                    state: sessionState, terminalBundleID: terminal)
+            }
+            // "working" and "end" only update the session list; the others raise a banner too
+            guard state == "input" || state == "done" else { return }
+            BoringViewCoordinator.shared.showAgentAlert(
+                name: name,
+                message: message ?? (state == "done" ? "Finished" : "Needs your attention"),
+                kind: state == "done" ? .done : .needsInput,
+                terminalBundleID: terminal)
         }
     }
 

@@ -235,12 +235,16 @@ class BoringViewCoordinator: ObservableObject {
     private var sneakPeekDuration: TimeInterval = 1.5
 
     // MARK: - Agent alerts (mynotch://agent?name=...&message=...&state=input|done)
-    func showAgentAlert(name: String, message: String, kind: AgentAlert.Kind) {
-        guard Defaults[.agentAlertsEnabled] else { return }
+    func showAgentAlert(
+        name: String, message: String, kind: AgentAlert.Kind,
+        terminalBundleID: String? = nil, force: Bool = false
+    ) {
+        guard force || Defaults[.agentAlertsEnabled] else { return }
         let alert = AgentAlert(
             name: String(name.prefix(40)),
             message: String(message.prefix(140)),
-            kind: kind
+            kind: kind,
+            terminalBundleID: terminalBundleID
         )
         withAnimation(.smooth) { agentAlert = alert }
 

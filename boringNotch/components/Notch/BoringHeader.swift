@@ -13,6 +13,7 @@ struct BoringHeader: View {
     @ObservedObject var batteryModel = BatteryStatusViewModel.shared
     @ObservedObject var coordinator = BoringViewCoordinator.shared
     @StateObject var tvm = ShelfStateViewModel.shared
+    @ObservedObject var pomodoro = PomodoroManager.shared
     var body: some View {
         HStack(spacing: 0) {
             HStack {
@@ -57,6 +58,25 @@ struct BoringHeader: View {
                                     }
                             }
                             .buttonStyle(PlainButtonStyle())
+                        }
+                        if Defaults[.showPomodoroButton] {
+                            Button(action: { pomodoro.toggle() }) {
+                                Capsule()
+                                    .fill(.black)
+                                    .frame(width: 30, height: 30)
+                                    .overlay {
+                                        Image(systemName: pomodoro.runState == .running ? "pause.fill" : "timer")
+                                            .foregroundColor(pomodoro.runState == .running ? .red : .white)
+                                            .padding()
+                                            .imageScale(.medium)
+                                    }
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .contextMenu {
+                                Button("Skip phase") { pomodoro.skip() }
+                                Button("Reset") { pomodoro.reset() }
+                            }
+                            .help("Pomodoro: click to start or pause, right-click for more")
                         }
                         if Defaults[.settingsIconInNotch] {
                             Button(action: {

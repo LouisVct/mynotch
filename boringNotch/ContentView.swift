@@ -215,10 +215,8 @@ struct ContentView: View {
         .padding(.bottom, 8)
         .frame(maxWidth: windowSize.width, maxHeight: windowSize.height, alignment: .top)
         .overlay(alignment: .top) {
-            if let alert = coordinator.agentAlert, vm.notchState == .closed {
-                AgentAlertBanner(alert: alert) { coordinator.dismissAgentAlert() }
-                    .padding(.top, vm.effectiveClosedNotchHeight + 10)
-                    .transition(.move(edge: .top).combined(with: .opacity))
+            if vm.notchState == .closed && !vm.hideOnClosed {
+                AgentOverlayView()
             }
         }
         .compositingGroup()

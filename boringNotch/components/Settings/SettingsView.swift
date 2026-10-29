@@ -147,6 +147,10 @@ struct GeneralSettings: View {
     @Default(.automaticallySwitchDisplay) var automaticallySwitchDisplay
     @Default(.enableGestures) var enableGestures
     @Default(.openNotchOnHover) var openNotchOnHover
+    @Default(.pomodoroWorkMinutes) var pomodoroWork
+    @Default(.pomodoroShortBreakMinutes) var pomodoroShortBreak
+    @Default(.pomodoroLongBreakMinutes) var pomodoroLongBreak
+    @Default(.pomodoroCyclesBeforeLongBreak) var pomodoroCycles
     
 
     var body: some View {
@@ -260,6 +264,7 @@ struct GeneralSettings: View {
             }
 
             NotchBehaviour()
+            PomodoroSettings()
 
             gestureControls()
         }
@@ -316,6 +321,51 @@ struct GeneralSettings: View {
             .multilineTextAlignment(.trailing)
             .foregroundStyle(.secondary)
             .font(.caption)
+        }
+    }
+
+    @ViewBuilder
+    func PomodoroSettings() -> some View {
+        Section {
+            Defaults.Toggle(key: .showPomodoroButton) {
+                Text("Show Pomodoro button in the open notch")
+            }
+            Stepper(value: $pomodoroWork, in: 1...120) {
+                HStack {
+                    Text("Focus")
+                    Spacer()
+                    Text("\(pomodoroWork) min").foregroundStyle(.secondary)
+                }
+            }
+            Stepper(value: $pomodoroShortBreak, in: 1...60) {
+                HStack {
+                    Text("Short break")
+                    Spacer()
+                    Text("\(pomodoroShortBreak) min").foregroundStyle(.secondary)
+                }
+            }
+            Stepper(value: $pomodoroLongBreak, in: 1...60) {
+                HStack {
+                    Text("Long break")
+                    Spacer()
+                    Text("\(pomodoroLongBreak) min").foregroundStyle(.secondary)
+                }
+            }
+            Stepper(value: $pomodoroCycles, in: 2...10) {
+                HStack {
+                    Text("Focus sessions before a long break")
+                    Spacer()
+                    Text("\(pomodoroCycles)").foregroundStyle(.secondary)
+                }
+            }
+            Defaults.Toggle(key: .pomodoroAutoStartNext) {
+                Text("Start the next phase automatically")
+            }
+            Defaults.Toggle(key: .pomodoroSound) {
+                Text("Play a sound when a phase ends")
+            }
+        } header: {
+            Text("Pomodoro")
         }
     }
 
