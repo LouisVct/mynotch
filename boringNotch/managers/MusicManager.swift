@@ -57,11 +57,7 @@ class MusicManager: ObservableObject {
     private var artworkData: Data? = nil
     private var artworkGeneration: Int = 0
     private var lyricsGeneration: Int = 0
-    private let artworkCache: NSCache<NSNumber, NSImage> = {
-        let cache = NSCache<NSNumber, NSImage>()
-        cache.countLimit = 30
-        return cache
-    }()
+    private let artworkCache = NSCache<NSNumber, NSImage>()
     private var artworkHashByTrack: [String: Int] = [:]
 
     // Store last values at the time artwork was changed
@@ -444,7 +440,7 @@ class MusicManager: ObservableObject {
     }
 
     private func cachedArtwork(forTrackKey key: String) -> NSImage? {
-        guard let hash = artworkHashByTrack[key] else { return nil }
+        guard Defaults[.artworkCacheSize] > 0, let hash = artworkHashByTrack[key] else { return nil }
         return artworkCache.object(forKey: NSNumber(value: hash))
     }
 
@@ -453,8 +449,11 @@ class MusicManager: ObservableObject {
         let generation = artworkGeneration
         let hash = artworkData.hashValue
 
+        let cacheSize = Defaults[.artworkCacheSize]
+        artworkCache.countLimit = max(cacheSize, 1)
+
         // Already decoded before: no need to decode again
-        if let cached = artworkCache.object(forKey: NSNumber(value: hash)) {
+        if cacheSize > 0, let cached = artworkCache.object(forKey: NSNumber(value: hash)) {
             artworkHashByTrack[trackKey] = hash
             usingAppIconForArtwork = false
             updateAlbumArt(newAlbumArt: cached)
@@ -467,9 +466,14 @@ class MusicManager: ObservableObject {
             if let artworkImage = NSImage(data: artworkData) {
                 DispatchQueue.main.async { [weak self] in
                     guard let self else { return }
-                    self.artworkCache.setObject(artworkImage, forKey: NSNumber(value: hash))
-                    if self.artworkHashByTrack.count > 100 { self.artworkHashByTrack.removeAll() }
-                    self.artworkHashByTrack[trackKey] = hash
+                    if cacheSize > 0 {
+                        self.artworkCache.setObject(artworkImage, forKey: NSNumber(value: hash))
+                        if self.artworkHashByTrack.count > cacheSize * 4 { self.artworkHashByTrack.removeAll() }
+                        self.artworkHashByTrack[trackKey] = hash
+                    } else {
+                        self.artworkCache.removeAllObjects()
+                        self.artworkHashByTrack.removeAll()
+                    }
                     // Drop results of decodes that finished after a newer track's artwork was requested
                     guard self.artworkGeneration == generation else { return }
                     self.usingAppIconForArtwork = false

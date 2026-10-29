@@ -605,6 +605,7 @@ struct Media: View {
     @Default(.sneakPeekStyles) var sneakPeekStyles
 
     @Default(.enableLyrics) var enableLyrics
+    @Default(.artworkCacheSize) var artworkCacheSize
 
     var body: some View {
         Form {
@@ -688,6 +689,14 @@ struct Media: View {
                     HStack {
                         Text("Show lyrics below artist name")
                         customBadge(text: "Beta")
+                    }
+                }
+                Stepper(value: $artworkCacheSize, in: 0...100, step: 5) {
+                    HStack {
+                        Text("Album covers kept in memory")
+                        Spacer()
+                        Text(artworkCacheSize == 0 ? "Off" : "\(artworkCacheSize)")
+                            .foregroundStyle(.secondary)
                     }
                 }
             } header: {
