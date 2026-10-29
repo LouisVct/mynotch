@@ -59,6 +59,8 @@ class MusicManager: ObservableObject {
     private var lyricsGeneration: Int = 0
     private let artworkCache = NSCache<NSNumber, NSImage>()
     private var artworkHashByTrack: [String: Int] = [:]
+    private var displayedArtworkHash: Int?
+    private var pendingSeek: (target: TimeInterval, requestedAt: Date)?
 
     // Store last values at the time artwork was changed
     private var lastArtworkTitle: String = "I'm Handsome"
@@ -218,12 +220,14 @@ class MusicManager: ObservableObject {
             } else if state.artwork == nil, let cached = self.cachedArtwork(forTrackKey: trackKey) {
                 // Artwork not delivered (yet) but we already know this album's cover
                 self.artworkGeneration &+= 1
+                self.displayedArtworkHash = cached.hash
                 self.usingAppIconForArtwork = false
-                self.updateAlbumArt(newAlbumArt: cached)
+                self.updateAlbumArt(newAlbumArt: cached.image)
             } else if state.artwork == nil {
                 // Try to use app icon if no artwork but track changed
                 if let appIconImage = AppIconAsNSImage(for: state.bundleIdentifier) {
                     self.artworkGeneration &+= 1 // invalidate any pending artwork decode
+                    self.displayedArtworkHash = nil
                     self.usingAppIconForArtwork = true
                     self.updateAlbumArt(newAlbumArt: appIconImage)
                 }
@@ -245,6 +249,12 @@ class MusicManager: ObservableObject {
 
             // Fetch lyrics on content change
             self.fetchLyricsIfAvailable(bundleIdentifier: state.bundleIdentifier, title: state.title, artist: state.artist)
+        }
+
+        if let seek = pendingSeek {
+            let age = Date().timeIntervalSince(seek.requestedAt)
+            let expected = seek.target + (state.isPlaying ? age * state.playbackRate : 0)
+            if abs(state.currentTime - expected) < 1.5 { pendingSeek = nil }
         }
 
         let timeChanged = state.currentTime != self.elapsedTime
@@ -435,16 +445,33 @@ class MusicManager: ObservableObject {
     }
 
     // MARK: - Artwork cache
-    private static func artworkTrackKey(bundle: String?, artist: String, album: String) -> String {
-        "\(bundle ?? "")|\(artist)|\(album)"
+    // Images are cached by the hash of their bytes (always correct). The link "track -> artwork" is only
+    // recorded once the artwork has stayed on screen with unchanged metadata: macOS sometimes delivers a
+    // new track's artwork before its title, and recording that would serve the wrong cover later.
+    private static func artworkTrackKey(bundle: String?, artist: String, album: String) -> String? {
+        guard !artist.isEmpty, !album.isEmpty else { return nil }
+        return "\(bundle ?? "")|\(artist)|\(album)"
     }
 
-    private func cachedArtwork(forTrackKey key: String) -> NSImage? {
-        guard Defaults[.artworkCacheSize] > 0, let hash = artworkHashByTrack[key] else { return nil }
-        return artworkCache.object(forKey: NSNumber(value: hash))
+    private func cachedArtwork(forTrackKey key: String?) -> (hash: Int, image: NSImage)? {
+        guard Defaults[.artworkCacheSize] > 0, let key, let hash = artworkHashByTrack[key],
+              let image = artworkCache.object(forKey: NSNumber(value: hash))
+        else { return nil }
+        return (hash, image)
     }
 
-    private func updateArtwork(_ artworkData: Data, trackKey: String) {
+    private func scheduleArtworkTrackLink(hash: Int, key: String?) {
+        guard let key, Defaults[.artworkCacheSize] > 0 else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            guard let self, self.displayedArtworkHash == hash,
+                  Self.artworkTrackKey(bundle: self.bundleIdentifier, artist: self.artistName, album: self.album) == key
+            else { return }
+            if self.artworkHashByTrack.count > 400 { self.artworkHashByTrack.removeAll() }
+            self.artworkHashByTrack[key] = hash
+        }
+    }
+
+    private func updateArtwork(_ artworkData: Data, trackKey: String?) {
         artworkGeneration &+= 1
         let generation = artworkGeneration
         let hash = artworkData.hashValue
@@ -454,9 +481,10 @@ class MusicManager: ObservableObject {
 
         // Already decoded before: no need to decode again
         if cacheSize > 0, let cached = artworkCache.object(forKey: NSNumber(value: hash)) {
-            artworkHashByTrack[trackKey] = hash
+            displayedArtworkHash = hash
             usingAppIconForArtwork = false
             updateAlbumArt(newAlbumArt: cached)
+            scheduleArtworkTrackLink(hash: hash, key: trackKey)
             return
         }
 
@@ -468,16 +496,16 @@ class MusicManager: ObservableObject {
                     guard let self else { return }
                     if cacheSize > 0 {
                         self.artworkCache.setObject(artworkImage, forKey: NSNumber(value: hash))
-                        if self.artworkHashByTrack.count > cacheSize * 4 { self.artworkHashByTrack.removeAll() }
-                        self.artworkHashByTrack[trackKey] = hash
                     } else {
                         self.artworkCache.removeAllObjects()
                         self.artworkHashByTrack.removeAll()
                     }
                     // Drop results of decodes that finished after a newer track's artwork was requested
                     guard self.artworkGeneration == generation else { return }
+                    self.displayedArtworkHash = hash
                     self.usingAppIconForArtwork = false
                     self.updateAlbumArt(newAlbumArt: artworkImage)
+                    self.scheduleArtworkTrackLink(hash: hash, key: trackKey)
                 }
             }
         }
@@ -513,6 +541,16 @@ class MusicManager: ObservableObject {
 
     // MARK: - Playback Position Estimation
     public func estimatedPlaybackPosition(at date: Date = Date()) -> TimeInterval {
+        // Right after a seek the player still reports the old position for a moment: stick to the target
+        if let seek = pendingSeek {
+            let age = date.timeIntervalSince(seek.requestedAt)
+            if age < 2.0 {
+                let expected = seek.target + (isPlaying ? age * playbackRate : 0)
+                return min(max(0, expected), songDuration)
+            }
+            pendingSeek = nil
+        }
+
         guard isPlaying else { return min(elapsedTime, songDuration) }
 
         let timeDifference = date.timeIntervalSince(timestampDate)
@@ -590,6 +628,7 @@ class MusicManager: ObservableObject {
     }
 
     func seek(to position: TimeInterval) {
+        pendingSeek = (position, Date())
         Task {
             await activeController?.seek(to: position)
         }

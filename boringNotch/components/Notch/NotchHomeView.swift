@@ -507,7 +507,7 @@ struct MusicSliderView: View {
             .font(.caption)
         }
         .onChange(of: currentDate) {
-           guard !dragging, timestampDate.timeIntervalSince(lastDragged) > -1 else { return }
+            guard !dragging else { return }
             sliderValue = MusicManager.shared.estimatedPlaybackPosition(at: currentDate)
         }
     }
