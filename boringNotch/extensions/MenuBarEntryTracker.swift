@@ -46,29 +46,25 @@ final class MenuBarEntryTracker {
         samples.removeAll { now.timeIntervalSince($0.date) > 1 }
     }
 
-    /// True when the cursor reached the notch horizontally (from its left or right side)
-    /// instead of coming down from below.
-    @MainActor
-    func enteredFromSide(vm: BoringViewModel) -> Bool {
-        guard let previous = samples.last(where: { !vm.isMouseHovering(position: $0.point) }),
-              let screen = NSScreen.screens.first(where: { NSMouseInRect(previous.point, $0.frame, false) })
-        else { return false }
-        // Same vertical band as the closed notch: the cursor slid in sideways
-        return previous.point.y >= screen.frame.maxY - vm.closedNotchSize.height
-    }
-
-    /// True when the last position before the cursor reached the notch was in the
-    /// menu bar strip beside it (i.e. it travelled along the menu bar).
+    /// True when the cursor slid along the menu bar for a moment right before reaching the notch.
+    /// A cursor coming up from below (or diagonally) only crosses the menu bar strip at the very end,
+    /// so it doesn't count.
     @MainActor
     func enteredFromMenuBar(vm: BoringViewModel) -> Bool {
-        guard let previous = samples.last(where: { !vm.isMouseHovering(position: $0.point) }),
-              let screen = NSScreen.screens.first(where: { NSMouseInRect(previous.point, $0.frame, false) })
+        let now = Date()
+        // Positions of the last 0.4 s that were outside the notch
+        let recent = samples.filter { now.timeIntervalSince($0.date) <= 0.4 && !vm.isMouseHovering(position: $0.point) }
+        guard let first = recent.first, let last = recent.last,
+              let screen = NSScreen.screens.first(where: { NSMouseInRect(last.point, $0.frame, false) })
         else { return false }
 
         let menuBarHeight = max(
             screen.frame.maxY - screen.visibleFrame.maxY,
             vm.closedNotchSize.height
         )
-        return previous.point.y >= screen.frame.maxY - menuBarHeight
+        let bandBottom = screen.frame.maxY - menuBarHeight
+        let allInMenuBar = recent.allSatisfy { $0.point.y >= bandBottom }
+        // It has to have spent a little time there, not just passed through
+        return allInMenuBar && last.date.timeIntervalSince(first.date) >= 0.1
     }
 }

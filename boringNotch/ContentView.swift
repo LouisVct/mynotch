@@ -597,8 +597,8 @@ struct ContentView: View {
                 return
             }
             
-            // A cursor sliding in from the left or right needs longer to open the notch
-            let sideDelay = MenuBarEntryTracker.shared.enteredFromSide(vm: vm) ? Defaults[.sideEntryExtraDelay] : 0
+            // A cursor that slid along the menu bar needs longer to open the notch
+            let sideDelay = MenuBarEntryTracker.shared.enteredFromMenuBar(vm: vm) ? Defaults[.sideEntryExtraDelay] : 0
 
             hoverTask = Task {
                 try? await Task.sleep(for: .seconds(Defaults[.minimumHoverDuration] + sideDelay))

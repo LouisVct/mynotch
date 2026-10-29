@@ -406,7 +406,7 @@ struct GeneralSettings: View {
                 }
                 Slider(value: $sideEntryExtraDelay, in: 0...1.5, step: 0.1) {
                     HStack {
-                        Text("Extra delay when arriving from the side")
+                        Text("Extra delay when coming from the menu bar")
                         Spacer()
                         Text("\(sideEntryExtraDelay, specifier: "%.1f")s")
                             .foregroundStyle(.secondary)
