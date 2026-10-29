@@ -144,11 +144,41 @@ class AppleMusicController: MediaControllerProtocol {
         updatedState.repeatMode = RepeatMode(rawValue: Int(repeatModeValue)) ?? .off
         let volumePercentage = descriptor.atIndex(9)?.int32Value ?? 50
         updatedState.volume = Double(volumePercentage) / 100.0
-        updatedState.artwork = descriptor.atIndex(10)?.data as Data?
+        // The script returns "" when Music has no scriptable artwork (typical for streamed tracks)
+        let scriptArtwork = descriptor.atIndex(10)?.data as Data?
+        updatedState.artwork = (scriptArtwork?.count ?? 0) > 64 ? scriptArtwork : nil
         let lovedState = descriptor.atIndex(11)?.booleanValue ?? false
         updatedState.isFavorite = lovedState
         updatedState.lastUpdated = Date()
+
+        // Keep a fallback cover we already fetched for this track
+        let trackKey = "\(updatedState.title)|\(updatedState.artist)|\(updatedState.album)"
+        if updatedState.artwork == nil, fallbackKey == trackKey { updatedState.artwork = fallbackArtwork }
         self.playbackState = updatedState
+
+        if updatedState.artwork == nil, fallbackKey != trackKey, updatedState.title != "Not Playing" {
+            fetchFallbackArtwork(for: trackKey, title: updatedState.title)
+        }
+    }
+
+    // MARK: - Artwork fallback (streamed tracks)
+    private var fallbackKey: String?
+    private var fallbackArtwork: Data?
+
+    private func fetchFallbackArtwork(for key: String, title: String) {
+        // One attempt per track, even when it fails
+        fallbackKey = key
+        fallbackArtwork = nil
+        Task { [weak self] in
+            let data = await MediaRemoteArtworkFetcher.fetchArtwork(forTitle: title)
+            guard let self, self.fallbackKey == key, let data else { return }
+            self.fallbackArtwork = data
+            // Only apply it if we are still on the same track
+            var state = self.playbackState
+            guard "\(state.title)|\(state.artist)|\(state.album)" == key else { return }
+            state.artwork = data
+            self.playbackState = state
+        }
     }
     
     // MARK: - Private Methods

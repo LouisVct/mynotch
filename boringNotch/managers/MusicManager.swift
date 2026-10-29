@@ -186,7 +186,11 @@ class MusicManager: ObservableObject {
 
     // MARK: - Update Methods
     @MainActor
-    private func updateFromPlaybackState(_ state: PlaybackState) {
+    private func updateFromPlaybackState(_ incoming: PlaybackState) {
+        // Controllers sometimes hand over an empty blob when the player has no artwork: that is "no artwork"
+        var state = incoming
+        if let artwork = state.artwork, artwork.count < 64 { state.artwork = nil }
+
         // Check for playback state changes (playing/paused)
         if state.isPlaying != self.isPlaying {
             NSLog("Playback state changed: \(state.isPlaying ? "Playing" : "Paused")")
@@ -215,15 +219,10 @@ class MusicManager: ObservableObject {
             self.triggerFlipAnimation()
 
             let trackKey = Self.artworkTrackKey(bundle: state.bundleIdentifier, artist: state.artist, album: state.album)
-            NSLog("[ART] state title=%@ album=%@ artwork=%@ artworkChanged=%d displayedHash=%@ linkForKey=%@",
-                  state.title, state.album, state.artwork.map { "\($0.count)B#\($0.hashValue)" } ?? "nil",
-                  artworkChanged ? 1 : 0, displayedArtworkHash.map(String.init) ?? "nil",
-                  trackKey.flatMap { artworkHashByTrack[$0] }.map(String.init) ?? "none")
             if artworkChanged, let artwork = state.artwork {
                 self.updateArtwork(artwork, trackKey: trackKey)
             } else if state.artwork == nil, let cached = self.cachedArtwork(forTrackKey: trackKey) {
                 // Artwork not delivered (yet) but we already know this album's cover
-                NSLog("[ART] using linked cache #%d for key=%@", cached.hash, trackKey ?? "nil")
                 self.artworkGeneration &+= 1
                 self.displayedArtworkHash = cached.hash
                 self.usingAppIconForArtwork = false
@@ -472,7 +471,6 @@ class MusicManager: ObservableObject {
                   Self.artworkTrackKey(bundle: self.bundleIdentifier, artist: self.artistName, album: self.album) == key
             else { return }
             if self.artworkHashByTrack.count > 400 { self.artworkHashByTrack.removeAll() }
-            NSLog("[ART] linking key=%@ -> #%d", key, hash)
             self.artworkHashByTrack[key] = hash
         }
     }
@@ -487,7 +485,6 @@ class MusicManager: ObservableObject {
 
         // Already decoded before: no need to decode again
         if cacheSize > 0, let cached = artworkCache.object(forKey: NSNumber(value: hash)) {
-            NSLog("[ART] displaying cached image #%d for key=%@", hash, trackKey ?? "nil")
             displayedArtworkHash = hash
             usingAppIconForArtwork = false
             updateAlbumArt(newAlbumArt: cached)
@@ -508,11 +505,7 @@ class MusicManager: ObservableObject {
                         self.artworkHashByTrack.removeAll()
                     }
                     // Drop results of decodes that finished after a newer track's artwork was requested
-                    guard self.artworkGeneration == generation else {
-                        NSLog("[ART] decode for #%d dropped (stale generation)", hash)
-                        return
-                    }
-                    NSLog("[ART] displaying decoded #%d for key=%@", hash, trackKey ?? "nil")
+                    guard self.artworkGeneration == generation else { return }
                     self.displayedArtworkHash = hash
                     self.usingAppIconForArtwork = false
                     self.updateAlbumArt(newAlbumArt: artworkImage)
