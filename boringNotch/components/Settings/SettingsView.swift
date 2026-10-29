@@ -757,7 +757,7 @@ struct Media: View {
                         customBadge(text: "Beta")
                     }
                 }
-                Stepper(value: $artworkCacheSize, in: 0...100, step: 5) {
+                Stepper(value: $artworkCacheSize, in: 0...500, step: 10) {
                     HStack {
                         Text("Album covers kept in memory")
                         Spacer()

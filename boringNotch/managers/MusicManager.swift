@@ -470,7 +470,7 @@ class MusicManager: ObservableObject {
             guard let self, self.displayedArtworkHash == hash,
                   Self.artworkTrackKey(bundle: self.bundleIdentifier, artist: self.artistName, album: self.album) == key
             else { return }
-            if self.artworkHashByTrack.count > 400 { self.artworkHashByTrack.removeAll() }
+            if self.artworkHashByTrack.count > max(400, Defaults[.artworkCacheSize] * 2) { self.artworkHashByTrack.removeAll() }
             self.artworkHashByTrack[key] = hash
         }
     }
