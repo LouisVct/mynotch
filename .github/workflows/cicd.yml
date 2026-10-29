@@ -22,6 +22,7 @@ jobs:
 
       - name: Build (unsigned)
         run: |
+          set -o pipefail
           xcodebuild \
             -project boringNotch.xcodeproj \
             -scheme boringNotch \
@@ -33,10 +34,11 @@ jobs:
 
       - name: Ad-hoc sign and create DMG
         run: |
-          APP="build/Build/Products/Release/boringNotch.app"
+          set -e
+          APP="build/Build/Products/Release/MyNotch.app"
           codesign --force --deep --sign - "$APP"
           mkdir stage
-          cp -R "$APP" "stage/MyNotch.app"
+          cp -R "$APP" stage/
           ln -s /Applications stage/Applications
           hdiutil create -volname MyNotch -srcfolder stage -ov -format UDZO MyNotch.dmg
 
