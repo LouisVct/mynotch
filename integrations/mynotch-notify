@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# Generic MyNotch notifier: works from any tool, script or hook.
+#
+#   mynotch-notify --name "Codex" --state working
+#   mynotch-notify --name "Codex" --state input --message "Needs approval"
+#   mynotch-notify --name "Codex" --state done
+#
+# --state   working (spinner + timer) | input (orange banner) | done (green banner) | end (remove)
+# --name    name shown in the notch                    (default: Agent)
+# --session id grouping events of one session          (default: name + current folder)
+# --project folder name shown in the list              (default: current folder)
+# --message text of the banner (input / done)
+# --app     bundle id of the app to jump back to       (default: the app running this shell)
+set -u
+
+name="Agent" state="input" session="" project="" message="" app=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --name) name="${2:-}"; shift 2 ;;
+    --state) state="${2:-}"; shift 2 ;;
+    --session) session="${2:-}"; shift 2 ;;
+    --project) project="${2:-}"; shift 2 ;;
+    --message) message="${2:-}"; shift 2 ;;
+    --app) app="${2:-}"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+
+urlenc() {
+  local LC_ALL=C s="$1" i c out=""
+  for ((i = 0; i < ${#s}; i++)); do
+    c="${s:i:1}"
+    case "$c" in
+      [a-zA-Z0-9.~_-]) out+="$c" ;;
+      *) out+="$(printf '%%%02X' "'$c")" ;;
+    esac
+  done
+  printf '%s' "$out"
+}
+
+[ -z "$project" ] && project="${PWD##*/}"
+[ -z "$session" ] && session="$name:$PWD"
+if [ -z "$app" ]; then
+  app="${__CFBundleIdentifier:-}"
+  if [ -z "$app" ]; then
+    case "${TERM_PROGRAM:-}" in
+      Apple_Terminal) app="com.apple.Terminal" ;;
+      iTerm.app) app="com.googlecode.iterm2" ;;
+      vscode) app="com.microsoft.VSCode" ;;
+      ghostty) app="com.mitchellh.ghostty" ;;
+      WarpTerminal) app="dev.warp.Warp-Stable" ;;
+    esac
+  fi
+fi
+
+query="name=$(urlenc "$name")&state=$(urlenc "$state")&session=$(urlenc "$session")&project=$(urlenc "$project")"
+[ -n "$app" ] && query+="&terminal=$(urlenc "$app")"
+[ -n "$message" ] && query+="&message=$(urlenc "$message")"
+
+open -g "mynotch://agent?$query" >/dev/null 2>&1 || true
+exit 0

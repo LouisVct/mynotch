@@ -74,15 +74,25 @@ Bouton minuteur dans l'en-tête de l'encoche ouverte.
 - Clic droit sur le bouton ou sur le minuteur de l'encoche : durées de focus et de pause, passer la phase, réinitialiser.
 - Réglages plus fins (pause longue, démarrage automatique, son) : Réglages > General > Pomodoro.
 
-## Autres agents (agy, etc.)
+## Autres outils (n'importe lequel)
 
-Je n'ai pas vérifié si agy propose des hooks. Sans hook, on peut enchaîner la commande :
+Le lien `mynotch://agent` est l'interface commune : tout programme capable de lancer une commande peut s'en servir.
+Deux scripts du dossier [integrations](../integrations/) évitent d'écrire le lien à la main :
 
 ```bash
-agy ...; open -g 'mynotch://agent?name=agy&message=Terminé&state=done'
+# Un événement ponctuel (états : working, input, done, end)
+integrations/mynotch-notify --name "Mon outil" --state input --message "J'ai besoin de toi"
+
+# Entoure n'importe quelle commande : spinner pendant qu'elle tourne, vert si ça finit, orange si ça échoue
+integrations/mynotch-run --name "Build" -- make all
+integrations/mynotch-run --name "Aider" -- aider
 ```
 
-## Sécurité
+Un clic sur la bannière ou le badge ramène à l'app qui a lancé la commande (Terminal, iTerm, VS Code, Ghostty, Warp,
+app Claude...). Pour une autre app, passe son identifiant avec `--app com.exemple.app`.
 
-Tout programme local (et un lien dans un navigateur) peut afficher une bannière : elle ne contient que du texte
-et n'exécute rien. Désactivable dans Réglages > Comportement > « Show alerts from AI coding agents ».
+- **Claude Code** : hooks fournis (voir plus haut).
+- **Codex CLI** : [integrations/codex/notify.sh](../integrations/codex/notify.sh), à mettre dans `notify = [...]` de
+  `~/.codex/config.toml`. Non testé.
+- **Les autres (agy, Aider, Gemini CLI, Cursor...)** : je n'ai pas vérifié leurs mécanismes de hooks. Quand l'outil
+  propose une commande de notification, mets-y `mynotch-notify`. Sinon, lance-le avec `mynotch-run`.

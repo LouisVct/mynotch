@@ -21,15 +21,17 @@ struct AgentSession: Identifiable, Equatable {
 }
 
 enum AgentTerminal {
-    /// Brings the app that hosts the agent (terminal, editor...) to the front.
+    /// Brings the app that hosts the agent (terminal, editor, Claude app...) to the front.
+    /// Uses LaunchServices like `open -a`: NSRunningApplication.activate() is ignored by macOS 14+
+    /// when the caller (a background app like MyNotch) isn't frontmost.
     @MainActor
     static func activate(bundleID: String?) {
-        guard let bundleID, !bundleID.isEmpty else { return }
-        if let running = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first {
-            running.activate()
-        } else if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
-            NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
-        }
+        guard let bundleID, !bundleID.isEmpty,
+              let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
+        else { return }
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = true
+        NSWorkspace.shared.openApplication(at: url, configuration: configuration)
     }
 }
 
