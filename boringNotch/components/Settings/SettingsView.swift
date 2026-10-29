@@ -147,6 +147,7 @@ struct GeneralSettings: View {
     @Default(.automaticallySwitchDisplay) var automaticallySwitchDisplay
     @Default(.enableGestures) var enableGestures
     @Default(.openNotchOnHover) var openNotchOnHover
+    @Default(.sideEntryExtraDelay) var sideEntryExtraDelay
     @Default(.pomodoroWorkMinutes) var pomodoroWork
     @Default(.pomodoroShortBreakMinutes) var pomodoroShortBreak
     @Default(.pomodoroLongBreakMinutes) var pomodoroLongBreak
@@ -399,6 +400,14 @@ struct GeneralSettings: View {
                 .onChange(of: minimumHoverDuration) {
                     NotificationCenter.default.post(
                         name: Notification.Name.notchHeightChanged, object: nil)
+                }
+                Slider(value: $sideEntryExtraDelay, in: 0...1.5, step: 0.1) {
+                    HStack {
+                        Text("Extra delay when arriving from the side")
+                        Spacer()
+                        Text("\(sideEntryExtraDelay, specifier: "%.1f")s")
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
         } header: {
