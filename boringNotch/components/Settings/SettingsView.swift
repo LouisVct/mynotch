@@ -260,6 +260,9 @@ struct GeneralSettings: View {
                             name: Notification.Name.notchHeightChanged, object: nil)
                     }
                 }
+                Defaults.Toggle(key: .adaptOpenNotchSize) {
+                    Text("Adapt the open notch size to its content")
+                }
             } header: {
                 Text("Notch sizing")
             }

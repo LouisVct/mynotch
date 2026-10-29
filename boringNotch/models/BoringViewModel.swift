@@ -189,8 +189,31 @@ class BoringViewModel: NSObject, ObservableObject {
         return false
     }
 
+    /// Size of the open notch for what it shows: the full size is only needed with the calendar or
+    /// the camera next to the player (or the shelf); music alone and the timer fit in less.
+    func preferredOpenSize(for view: NotchViews) -> CGSize {
+        guard Defaults[.adaptOpenNotchSize] else { return openNotchSize }
+        switch view {
+        case .home:
+            let hasSidePanel = Defaults[.showCalendar]
+                || (Defaults[.showMirror] && WebcamManager.shared.cameraAvailable && isCameraExpanded)
+            return hasSidePanel ? openNotchSize : CGSize(width: 500, height: 170)
+        case .timer:
+            // The picker (presets, modes) needs more height than the running countdown
+            return CGSize(width: 440, height: PomodoroManager.shared.runState == .idle ? 185 : 150)
+        case .shelf:
+            return openNotchSize
+        }
+    }
+
+    /// Re-applies the size after the shown content changed while the notch is open.
+    func refreshOpenSize() {
+        guard notchState == .open else { return }
+        notchSize = preferredOpenSize(for: coordinator.currentView)
+    }
+
     func open() {
-        self.notchSize = openNotchSize
+        self.notchSize = preferredOpenSize(for: coordinator.currentView)
         self.notchState = .open
         
         // Force music information update when notch is opened
