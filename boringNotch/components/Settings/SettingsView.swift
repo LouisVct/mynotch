@@ -333,6 +333,9 @@ struct GeneralSettings: View {
             Defaults.Toggle(key: .enableHaptics) {
                     Text("Enable haptic feedback")
             }
+            Defaults.Toggle(key: .agentAlertsEnabled) {
+                Text("Show alerts from AI coding agents")
+            }
             Toggle("Remember last tab", isOn: $coordinator.openLastTabByDefault)
             if openNotchOnHover {
                 Slider(value: $minimumHoverDuration, in: 0...1, step: 0.1) {

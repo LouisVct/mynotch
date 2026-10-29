@@ -52,6 +52,8 @@ class BoringViewCoordinator: ObservableObject {
 
     @Published var currentView: NotchViews = .home
     @Published var helloAnimationRunning: Bool = false
+    @Published var agentAlert: AgentAlert?
+    private var agentAlertTask: Task<Void, Never>?
     private var sneakPeekDispatch: DispatchWorkItem?
     private var expandingViewDispatch: DispatchWorkItem?
     private var hudEnableTask: Task<Void, Never>?
@@ -231,6 +233,32 @@ class BoringViewCoordinator: ObservableObject {
     }
 
     private var sneakPeekDuration: TimeInterval = 1.5
+
+    // MARK: - Agent alerts (mynotch://agent?name=...&message=...&state=input|done)
+    func showAgentAlert(name: String, message: String, kind: AgentAlert.Kind) {
+        guard Defaults[.agentAlertsEnabled] else { return }
+        let alert = AgentAlert(
+            name: String(name.prefix(40)),
+            message: String(message.prefix(140)),
+            kind: kind
+        )
+        withAnimation(.smooth) { agentAlert = alert }
+
+        agentAlertTask?.cancel()
+        agentAlertTask = Task { [weak self] in
+            // Alerts that need input stay longer than "done" notices
+            try? await Task.sleep(for: .seconds(kind == .needsInput ? 30 : 8))
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                withAnimation(.smooth) { self?.agentAlert = nil }
+            }
+        }
+    }
+
+    func dismissAgentAlert() {
+        agentAlertTask?.cancel()
+        withAnimation(.smooth) { agentAlert = nil }
+    }
     private var sneakPeekTask: Task<Void, Never>?
 
     // Helper function to manage sneakPeek timer using Swift Concurrency

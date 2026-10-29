@@ -278,8 +278,35 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.alphaValue = 1
     }
 
+    @objc func handleGetURL(_ event: NSAppleEventDescriptor, withReplyEvent _: NSAppleEventDescriptor) {
+        // '----' = keyDirectObject
+        guard let raw = event.paramDescriptor(forKeyword: 0x2D2D_2D2D)?.stringValue,
+              let components = URLComponents(string: raw),
+              components.scheme == "mynotch", components.host == "agent"
+        else { return }
+
+        func value(_ name: String) -> String? {
+            components.queryItems?.first(where: { $0.name == name })?.value
+        }
+        let name = value("name") ?? "AI agent"
+        let message = value("message") ?? "Needs your attention"
+        let kind: AgentAlert.Kind = value("state") == "done" ? .done : .needsInput
+
+        Task { @MainActor in
+            BoringViewCoordinator.shared.showAgentAlert(name: name, message: message, kind: kind)
+        }
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         MenuBarEntryTracker.shared.start()
+
+        // 'GURL' = kInternetEventClass / kAEGetURL
+        NSAppleEventManager.shared().setEventHandler(
+            self,
+            andSelector: #selector(handleGetURL(_:withReplyEvent:)),
+            forEventClass: 0x4755_524C,
+            andEventID: 0x4755_524C
+        )
 
         NotificationCenter.default.addObserver(
             self,

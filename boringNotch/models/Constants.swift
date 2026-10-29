@@ -132,6 +132,7 @@ extension Defaults.Keys {
     static let enableLyrics = Key<Bool>("enableLyrics", default: false)
     static let offerConversionOnDrop = Key<Bool>("offerConversionOnDrop", default: true)
     static let mediaSwipeGestures = Key<Bool>("mediaSwipeGestures", default: true)
+    static let agentAlertsEnabled = Key<Bool>("agentAlertsEnabled", default: true)
     static let artworkCacheSize = Key<Int>("artworkCacheSize", default: 30)
     static let musicControlSlots = Key<[MusicControlButton]>(
         "musicControlSlots",
