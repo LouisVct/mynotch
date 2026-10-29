@@ -138,6 +138,7 @@ extension Defaults.Keys {
     static let pomodoroShortBreakMinutes = Key<Int>("pomodoroShortBreakMinutes", default: 5)
     static let pomodoroLongBreakMinutes = Key<Int>("pomodoroLongBreakMinutes", default: 15)
     static let pomodoroCyclesBeforeLongBreak = Key<Int>("pomodoroCyclesBeforeLongBreak", default: 4)
+    static let pomodoroBreaks = Key<Bool>("pomodoroBreaks", default: true)
     static let pomodoroAutoStartNext = Key<Bool>("pomodoroAutoStartNext", default: false)
     static let pomodoroSound = Key<Bool>("pomodoroSound", default: true)
     static let showPomodoroButton = Key<Bool>("showPomodoroButton", default: true)

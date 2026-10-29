@@ -60,20 +60,24 @@ struct BoringHeader: View {
                             .buttonStyle(PlainButtonStyle())
                         }
                         if Defaults[.showPomodoroButton] {
-                            Button(action: { pomodoro.toggle() }) {
+                            Button(action: {
+                                withAnimation(.smooth) {
+                                    coordinator.currentView = coordinator.currentView == .timer ? .home : .timer
+                                }
+                            }) {
                                 Capsule()
                                     .fill(.black)
                                     .frame(width: 30, height: 30)
                                     .overlay {
-                                        Image(systemName: pomodoro.runState == .running ? "pause.fill" : "timer")
-                                            .foregroundColor(pomodoro.runState == .running ? .red : .white)
+                                        Image(systemName: pomodoro.runState == .paused ? "pause.fill" : "timer")
+                                            .foregroundColor(pomodoro.isActive || coordinator.currentView == .timer ? Color.timerOrange : .white)
                                             .padding()
                                             .imageScale(.medium)
                                     }
                             }
                             .buttonStyle(PlainButtonStyle())
                             .contextMenu { PomodoroMenuItems(pomodoro: pomodoro) }
-                            .help("Pomodoro: click to start or pause, right-click for more")
+                            .help("Timer")
                         }
                         if Defaults[.settingsIconInNotch] {
                             Button(action: {

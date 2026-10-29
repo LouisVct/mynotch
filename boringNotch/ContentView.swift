@@ -64,7 +64,7 @@ struct ContentView: View {
     /// Width of each side slot of the closed notch (equal on both sides to stay centered on the cutout).
     /// The Pomodoro countdown needs more room than the music visualizer.
     private var activitySlotWidth: CGFloat {
-        max(0, vm.effectiveClosedNotchHeight - 12) + (pomodoro.isActive ? 34 : 0)
+        pomodoro.isActive ? 44 : max(0, vm.effectiveClosedNotchHeight - 12)
     }
 
     private var hasClosedActivity: Bool {
@@ -86,7 +86,7 @@ struct ContentView: View {
         } else if vm.notchState == .closed && !vm.hideOnClosed && !coordinator.expandingView.show
             && hasClosedActivity
         {
-            chinWidth += (2 * activitySlotWidth + 20)
+            chinWidth += (2 * activitySlotWidth + 8)
         } else if !coordinator.expandingView.show && vm.notchState == .closed
             && (!musicManager.isPlaying && musicManager.isPlayerIdle) && Defaults[.showNotHumanFace]
             && !vm.hideOnClosed
@@ -383,6 +383,8 @@ struct ContentView: View {
                         NotchHomeView(albumArtNamespace: albumArtNamespace)
                     case .shelf:
                         ShelfView()
+                    case .timer:
+                        TimerView()
                     }
                 }
                 .transition(
@@ -405,6 +407,8 @@ struct ContentView: View {
             HStack {
                 if !agentSessions.sessions.isEmpty {
                     AgentBadge()
+                } else if pomodoro.isActive {
+                    PomodoroGlyph()
                 }
             }
             .frame(width: activitySlotWidth, alignment: .center)

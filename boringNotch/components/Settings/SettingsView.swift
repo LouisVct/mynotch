@@ -329,7 +329,7 @@ struct GeneralSettings: View {
     func PomodoroSettings() -> some View {
         Section {
             Defaults.Toggle(key: .showPomodoroButton) {
-                Text("Show Pomodoro button in the open notch")
+                Text("Show timer button in the open notch")
             }
             Stepper(value: $pomodoroWork, in: 1...120) {
                 HStack {
@@ -358,6 +358,9 @@ struct GeneralSettings: View {
                     Spacer()
                     Text("\(pomodoroCycles)").foregroundStyle(.secondary)
                 }
+            }
+            Defaults.Toggle(key: .pomodoroBreaks) {
+                Text("Add a break after each focus (Pomodoro)")
             }
             Defaults.Toggle(key: .pomodoroAutoStartNext) {
                 Text("Start the next phase automatically")

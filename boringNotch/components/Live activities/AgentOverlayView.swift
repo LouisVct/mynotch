@@ -42,7 +42,21 @@ struct AgentBadge: View {
     }
 }
 
-/// Pomodoro countdown, shown on the right of the notch in place of the music visualizer.
+/// Orange timer icon, shown on the left of the notch when nothing else uses that slot (like the iPhone).
+struct PomodoroGlyph: View {
+    @ObservedObject var pomodoro = PomodoroManager.shared
+
+    var body: some View {
+        Image(systemName: pomodoro.runState == .paused ? "pause.fill" : "timer")
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(Color.timerOrange)
+            .contentShape(Rectangle())
+            .simultaneousGesture(TapGesture().onEnded { PomodoroManager.selectTimerPanel() })
+            .contextMenu { PomodoroMenuItems(pomodoro: pomodoro) }
+    }
+}
+
+/// Timer countdown, shown on the right of the notch in place of the music visualizer.
 struct PomodoroTimerLabel: View {
     @ObservedObject var pomodoro = PomodoroManager.shared
 
@@ -56,10 +70,11 @@ struct PomodoroTimerLabel: View {
             }
         }
         .monospacedDigit()
-        .font(.system(size: 12, weight: .semibold, design: .rounded))
-        .foregroundStyle(pomodoro.phase == .work ? Color.red : Color.green)
+        .font(.system(size: 13, weight: .semibold, design: .rounded))
+        .foregroundStyle(Color.timerOrange)
         .lineLimit(1)
         .contentShape(Rectangle())
+        .simultaneousGesture(TapGesture().onEnded { PomodoroManager.selectTimerPanel() })
         .contextMenu { PomodoroMenuItems(pomodoro: pomodoro) }
     }
 }

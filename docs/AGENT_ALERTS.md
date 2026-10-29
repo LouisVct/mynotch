@@ -56,14 +56,23 @@ relance `install.sh`.
 
 ## Dans l'encoche fermée (façon Live Activity iPhone)
 
-- **Minuteur Pomodoro** : à droite du cran, à la place des barres de musique. Clic droit = pause, durées, passer, réinitialiser.
+- **Minuteur** : tout en orange comme sur l'iPhone. Une icône minuteur à gauche du cran, le compte à rebours à droite
+  (à la place des barres de musique si elle joue). Un clic ouvre l'encoche sur le panneau Minuteur.
 - **Agents** : à gauche du cran (spinner = travail, point d'exclamation orange = t'attend, coche verte = terminé, nombre = plusieurs sessions).
   Si la musique occupe la gauche, une petite pastille « N agents » apparaît sous l'encoche.
 - Un clic sur le badge ou la pastille ouvre la liste des sessions ; un clic sur une ligne ramène à la fenêtre de la session.
 - Plusieurs sessions : une bannière par session (3 maximum). Un clic sur une bannière ramène à la fenêtre et la ferme ;
   la croix la ferme seulement. Une session terminée disparaît d'elle-même après 15 s.
 
-Durées du Pomodoro : clic droit sur le minuteur, ou Réglages > General > Pomodoro.
+## Panneau Minuteur (encoche ouverte)
+
+Bouton minuteur dans l'en-tête de l'encoche ouverte.
+- **À l'arrêt** : durée en grand avec − / +, préréglages 1 · 5 · 10 · 15 · 25 · 30 · 45 · 60 min (un clic = démarre tout de suite),
+  case « pause après » (mode Pomodoro), gros bouton orange pour démarrer.
+- **En cours** : compte à rebours en grand, barre de progression, bouton pause / reprise (orange) et bouton **✕ pour annuler**
+  (revient aux préréglages).
+- Clic droit sur le bouton ou sur le minuteur de l'encoche : durées de focus et de pause, passer la phase, réinitialiser.
+- Réglages plus fins (pause longue, démarrage automatique, son) : Réglages > General > Pomodoro.
 
 ## Autres agents (agy, etc.)
 

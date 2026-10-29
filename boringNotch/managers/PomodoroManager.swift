@@ -39,6 +39,21 @@ final class PomodoroManager: ObservableObject {
 
     var isActive: Bool { runState != .idle }
 
+    /// Length of the phase currently selected (focus or break).
+    var currentPhaseDuration: TimeInterval { duration(for: phase) }
+
+    /// When the running phase started, for progress bars.
+    var phaseStartDate: Date? { endDate?.addingTimeInterval(-currentPhaseDuration) }
+
+    /// Starts a focus phase with the given length in one step (quick presets).
+    func startFocus(minutes: Int) {
+        finishTask?.cancel()
+        runState = .idle
+        phase = .work
+        Defaults[.pomodoroWorkMinutes] = min(max(1, minutes), 240)
+        start()
+    }
+
     private func duration(for phase: Phase) -> TimeInterval {
         let minutes: Int
         switch phase {
@@ -88,6 +103,11 @@ final class PomodoroManager: ObservableObject {
             endDate = nil
             completedWorkSessions = 0
         }
+    }
+
+    /// Makes the notch open on the Timer panel. The tap itself still opens the notch.
+    static func selectTimerPanel() {
+        BoringViewCoordinator.shared.currentView = .timer
     }
 
     // MARK: - Durations
@@ -146,9 +166,12 @@ final class PomodoroManager: ObservableObject {
         if Defaults[.pomodoroSound] {
             NSSound(named: "Glass")?.play()
         }
-        let message = finished == .work
-            ? "Focus done. \(phase.title) next."
-            : "Break over. Back to focus."
+        let message: String
+        if finished == .work {
+            message = Defaults[.pomodoroBreaks] ? "Focus done. \(phase.title) next." : "Timer done."
+        } else {
+            message = "Break over. Back to focus."
+        }
         BoringViewCoordinator.shared.showAgentAlert(
             name: "Pomodoro", message: message, kind: .done, force: true)
     }
@@ -156,6 +179,12 @@ final class PomodoroManager: ObservableObject {
     private func advance() {
         finishTask?.cancel()
         withAnimation(.smooth) {
+            if phase == .work && !Defaults[.pomodoroBreaks] {
+                // Plain timer: nothing follows the countdown
+                runState = .idle
+                endDate = nil
+                return
+            }
             if phase == .work {
                 completedWorkSessions += 1
                 let cycles = max(1, Defaults[.pomodoroCyclesBeforeLongBreak])
@@ -166,6 +195,6 @@ final class PomodoroManager: ObservableObject {
             runState = .idle
             endDate = nil
         }
-        if Defaults[.pomodoroAutoStartNext] { start() }
+        if runState == .idle && Defaults[.pomodoroAutoStartNext] && Defaults[.pomodoroBreaks] { start() }
     }
 }
