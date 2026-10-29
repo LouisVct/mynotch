@@ -938,6 +938,9 @@ struct Shelf: View {
                 Defaults.Toggle(key: .openShelfByDefault) {
                     Text("Open shelf by default if items are present")
                 }
+                Defaults.Toggle(key: .offerConversionOnDrop) {
+                    Text("Offer to convert files when dropped")
+                }
                 Defaults.Toggle(key: .expandedDragDetection) {
                     Text("Expanded drag detection area")
                 }

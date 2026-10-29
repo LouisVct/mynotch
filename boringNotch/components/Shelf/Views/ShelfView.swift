@@ -75,6 +75,13 @@ struct ShelfView: View {
             }
             .contentShape(Rectangle())
             .onTapGesture { selection.clear() }
+            .overlay(alignment: .bottom) {
+                if let offer = tvm.conversionOffer {
+                    ConversionOfferView(tvm: tvm, offer: offer)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+            .animation(.smooth, value: tvm.conversionOffer?.id)
     }
 
     var content: some View {

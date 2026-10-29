@@ -6,6 +6,13 @@
 
 import Foundation
 import AppKit
+import Defaults
+
+struct ConversionOffer: Identifiable {
+    let id = UUID()
+    let items: [ShelfItem]
+    let targets: [ConversionTarget]
+}
 
 @MainActor
 final class ShelfStateViewModel: ObservableObject {
@@ -16,6 +23,8 @@ final class ShelfStateViewModel: ObservableObject {
     }
 
     @Published var isLoading: Bool = false
+    @Published var conversionOffer: ConversionOffer?
+    @Published var isConverting: Bool = false
 
     var isEmpty: Bool { items.isEmpty }
 
@@ -85,6 +94,63 @@ final class ShelfStateViewModel: ObservableObject {
             await MainActor.run {
                 self?.add(dropped)
                 self?.isLoading = false
+                self?.offerConversion(for: dropped)
+            }
+        }
+    }
+
+    // MARK: - Conversion offer
+
+    private func offerConversion(for dropped: [ShelfItem]) {
+        guard Defaults[.offerConversionOnDrop], !dropped.isEmpty else { return }
+        let fileItems = dropped.filter { if case .file = $0.kind { return true } else { return false } }
+        // Only offer when everything dropped is a file; mixed drops stay untouched
+        guard fileItems.count == dropped.count else { return }
+
+        let urls = resolveFileURLs(for: fileItems)
+        guard urls.count == fileItems.count else { return }
+        let targets = FileConversionService.shared.targets(for: urls)
+        guard !targets.isEmpty else { return }
+
+        let offer = ConversionOffer(items: fileItems, targets: targets)
+        conversionOffer = offer
+
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(15))
+            guard let self, self.conversionOffer?.id == offer.id, !self.isConverting else { return }
+            self.conversionOffer = nil
+        }
+    }
+
+    func dismissConversionOffer() {
+        conversionOffer = nil
+    }
+
+    func convert(_ offer: ConversionOffer, to target: ConversionTarget) {
+        guard !isConverting else { return }
+        isConverting = true
+        let urls = resolveFileURLs(for: offer.items)
+
+        Task { [weak self] in
+            defer {
+                self?.isConverting = false
+                self?.conversionOffer = nil
+            }
+            do {
+                let outputs = try await urls.accessSecurityScopedResources { scoped in
+                    try await FileConversionService.shared.convert(scoped, to: target)
+                }
+                let newItems: [ShelfItem] = outputs.compactMap { url in
+                    guard let bookmark = try? Bookmark(url: url) else { return nil }
+                    return ShelfItem(kind: .file(bookmark: bookmark.data), isTemporary: true)
+                }
+                self?.add(newItems)
+            } catch {
+                let alert = NSAlert()
+                alert.messageText = "Conversion failed"
+                alert.informativeText = error.localizedDescription
+                alert.alertStyle = .warning
+                alert.runModal()
             }
         }
     }
