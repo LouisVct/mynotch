@@ -98,6 +98,13 @@ final class AgentSessionManager: ObservableObject {
         }
     }
 
+    func clearAll() {
+        withAnimation(.smooth) {
+            sessions.removeAll()
+            isListExpanded = false
+        }
+    }
+
     func end(id: String) {
         withAnimation(.smooth) {
             sessions.removeAll { $0.id == id }
@@ -128,7 +135,7 @@ final class AgentSessionManager: ObservableObject {
                 let idle = now.timeIntervalSince(session.updatedAt)
                 switch session.state {
                 case .working: return idle > 3 * 3600
-                case .needsInput: return idle > 6 * 3600
+                case .needsInput: return idle > 3600
                 case .done: return idle > 30 * 60
                 }
             }

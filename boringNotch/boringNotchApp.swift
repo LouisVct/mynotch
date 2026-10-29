@@ -305,6 +305,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let terminal = value("terminal").map { String($0.prefix(120)) }
 
         Task { @MainActor in
+            // mynotch://agent?state=clear removes every session (stuck badges)
+            if state == "clear" {
+                AgentSessionManager.shared.clearAll()
+                return
+            }
             if let session {
                 if state == "end" {
                     AgentSessionManager.shared.end(id: session)

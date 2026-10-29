@@ -14,13 +14,14 @@ mynotch://agent?name=<nom>&state=<working|input|done|end>&session=<id>&project=<
   - `input` : il attend toi. Bannière orange (30 s).
   - `done` : terminé. Bannière verte (8 s).
   - `end` : la session est fermée, elle disparaît de la liste.
+  - `clear` : supprime toutes les sessions (badge bloqué) : `open -g 'mynotch://agent?state=clear'`. Même chose via clic droit sur le badge.
 - `session` : identifiant de session. Sans lui, seule la bannière s'affiche, sans suivi.
 - `project` : nom affiché dans la liste. `name` : 40 caractères max. `message` : 140 max.
 - `terminal` : bundle id de l'app qui héberge l'agent (Terminal, iTerm, VS Code, app Claude...).
   Il active le bouton « aller au terminal ».
 
 Clic sur la pastille = liste des sessions. Les sessions qui ne donnent plus de nouvelles sont retirées
-(3 h en travail, 6 h en attente, 30 min une fois terminées).
+(3 h en travail, 1 h en attente, 15 s une fois terminées).
 
 Test à la main :
 

@@ -40,6 +40,7 @@ struct AgentBadge: View {
             Button(agents.isListExpanded ? "Hide sessions" : "Show sessions") {
                 withAnimation(.smooth) { agents.isListExpanded.toggle() }
             }
+            Button("Clear all sessions") { agents.clearAll() }
         }
         .help("AI agents")
     }
@@ -145,6 +146,7 @@ private struct AgentPill: View {
             Button(agents.isListExpanded ? "Hide sessions" : "Show sessions") {
                 withAnimation(.smooth) { agents.isListExpanded.toggle() }
             }
+            Button("Clear all sessions") { agents.clearAll() }
         }
     }
 }
