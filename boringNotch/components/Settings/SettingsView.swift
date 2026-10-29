@@ -324,6 +324,11 @@ struct GeneralSettings: View {
             Defaults.Toggle(key: .openNotchOnHover) {
                 Text("Open notch on hover")
             }
+            if openNotchOnHover {
+                Defaults.Toggle(key: .ignoreHoverFromMenuBar) {
+                    Text("Don't open when the cursor comes from the menu bar")
+                }
+            }
             Defaults.Toggle(key: .enableHaptics) {
                     Text("Enable haptic feedback")
             }
@@ -865,8 +870,6 @@ struct About: View {
                     Text("Version info")
                 }
 
-                UpdaterSettingsView(updater: updaterController.updater)
-
                 HStack(spacing: 30) {
                     Spacer(minLength: 0)
                     Button {
@@ -897,13 +900,6 @@ struct About: View {
                     .padding(.horizontal, 10)
             }
             .frame(maxWidth: .infinity, alignment: .center)
-        }
-        .toolbar {
-            //            Button("Welcome window") {
-            //                openWindow(id: "onboarding")
-            //            }
-            //            .controlSize(.extraLarge)
-            CheckForUpdatesView(updater: updaterController.updater)
         }
         .navigationTitle("About")
     }

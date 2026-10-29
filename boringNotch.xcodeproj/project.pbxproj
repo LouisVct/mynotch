@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AA00000000000000000000B1 /* MenuBarEntryTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000000F1 /* MenuBarEntryTracker.swift */; };
 		1100290C2E847E2800035A57 /* NSItemProvider+LoadHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1100290B2E847E2800035A57 /* NSItemProvider+LoadHelpers.swift */; };
 		110029272E84FD4C00035A57 /* TemporaryFileStorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110029262E84FD4C00035A57 /* TemporaryFileStorageService.swift */; };
 		1100292A2E8691B400035A57 /* FileShareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110029292E8691B400035A57 /* FileShareView.swift */; };
@@ -181,6 +182,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		AA00000000000000000000F1 /* MenuBarEntryTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarEntryTracker.swift; sourceTree = "<group>"; };
 		1100290B2E847E2800035A57 /* NSItemProvider+LoadHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSItemProvider+LoadHelpers.swift"; sourceTree = "<group>"; };
 		110029262E84FD4C00035A57 /* TemporaryFileStorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemporaryFileStorageService.swift; sourceTree = "<group>"; };
 		110029292E8691B400035A57 /* FileShareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileShareView.swift; sourceTree = "<group>"; };
@@ -682,6 +684,7 @@
 				14C08BC02C8E03AD000F8AA0 /* NSImage+Extensions.swift */,
 				B17266DE2C64DFA00031BA0D /* BundleInfos.swift */,
 				B1B112922C6A577E00093D8F /* MouseTracker.swift */,
+				AA00000000000000000000F1 /* MenuBarEntryTracker.swift */,
 				B1CE8CFD2C6F659400DD9871 /* KeyboardShortcutsHelper.swift */,
 				14E9FEAD2C7325770062E83F /* Button+Bouncing.swift */,
 				B10348D82C74E56000475897 /* ConditionalModifier.swift */,
@@ -954,6 +957,7 @@
 				149E0B9A2C737D40006418B1 /* WebcamView.swift in Sources */,
 				1471639A2C5D35FF0068B555 /* MusicManager.swift in Sources */,
 				B1B112932C6A577E00093D8F /* MouseTracker.swift in Sources */,
+				AA00000000000000000000B1 /* MenuBarEntryTracker.swift in Sources */,
 				B1C448962C9712C4001F0858 /* ActionBar.swift in Sources */,
 				118EBE312E9717DB00D54B5A /* URL+SecurityScoped.swift in Sources */,
 				1132E5162E777C140068732D /* YouTubeMusicAuthentication.swift in Sources */,

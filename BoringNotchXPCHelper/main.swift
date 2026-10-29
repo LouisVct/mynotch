@@ -12,6 +12,9 @@ class ServiceDelegate: NSObject, NSXPCListenerDelegate {
     /// This method is where the NSXPCListener configures, accepts, and resumes a new incoming NSXPCConnection.
     func listener(_ listener: NSXPCListener, shouldAcceptNewConnection newConnection: NSXPCConnection) -> Bool {
         
+        // Only the host app may talk to this helper.
+        newConnection.setCodeSigningRequirement("identifier \"theboringteam.boringnotch\"")
+
         // Configure the connection.
         // First, set the interface that the exported object implements.
         newConnection.exportedInterface = NSXPCInterface(with: (any BoringNotchXPCHelperProtocol).self)

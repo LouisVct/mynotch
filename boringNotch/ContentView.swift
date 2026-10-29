@@ -526,6 +526,10 @@ struct ContentView: View {
             guard vm.notchState == .closed,
                   !coordinator.sneakPeek.show,
                   Defaults[.openNotchOnHover] else { return }
+
+            if Defaults[.ignoreHoverFromMenuBar] && MenuBarEntryTracker.shared.enteredFromMenuBar(vm: vm) {
+                return
+            }
             
             hoverTask = Task {
                 try? await Task.sleep(for: .seconds(Defaults[.minimumHoverDuration]))

@@ -65,6 +65,7 @@ final class NowPlayingController: ObservableObject, MediaControllerProtocol {
     private let MRMediaRemoteSetShuffleModeFunction: @convention(c) (Int) -> Void
     private let MRMediaRemoteSetRepeatModeFunction: @convention(c) (Int) -> Void
 
+    private var lastArtworkReceivedAt: Date = .distantPast
     private var process: Process?
     private var pipeHandler: JSONLinesPipeHandler?
     private var streamTask: Task<Void, Never>?
@@ -270,8 +271,22 @@ final class NowPlayingController: ObservableObject, MediaControllerProtocol {
             newPlaybackState.artwork = Data(
                 base64Encoded: artworkDataString.trimmingCharacters(in: .whitespacesAndNewlines)
             )
+            lastArtworkReceivedAt = Date()
         } else if !diff {
             newPlaybackState.artwork = nil
+        } else {
+            // A diff without artwork means "unchanged": keep the previous one, unless the
+            // track clearly changed and no artwork arrived alongside (or just before) it,
+            // in which case the old cover would belong to the wrong song.
+            let trackChanged = newPlaybackState.title != self.playbackState.title
+                || newPlaybackState.album != self.playbackState.album
+            let artworkIsFresh = Date().timeIntervalSince(lastArtworkReceivedAt) < 1.0
+            let sameAlbum = newPlaybackState.album == self.playbackState.album
+            if trackChanged && !artworkIsFresh && !sameAlbum {
+                newPlaybackState.artwork = nil
+            } else {
+                newPlaybackState.artwork = self.playbackState.artwork
+            }
         }
 
         if let dateString = payload.timestamp,
