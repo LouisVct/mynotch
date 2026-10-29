@@ -62,11 +62,7 @@ private struct PomodoroChip: View {
         .foregroundStyle(.white)
         .chipBackground()
         .onTapGesture { pomodoro.toggle() }
-        .contextMenu {
-            Button(pomodoro.runState == .running ? "Pause" : "Resume") { pomodoro.toggle() }
-            Button("Skip") { pomodoro.skip() }
-            Button("Reset") { pomodoro.reset() }
-        }
+        .contextMenu { PomodoroMenuItems(pomodoro: pomodoro) }
     }
 }
 
@@ -163,5 +159,44 @@ private extension View {
             .background(.black, in: Capsule())
             .overlay(Capsule().stroke(Color.white.opacity(0.12)))
             .contentShape(Capsule())
+    }
+}
+
+/// Context menu shared by the header button and the pill under the closed notch.
+struct PomodoroMenuItems: View {
+    @ObservedObject var pomodoro: PomodoroManager
+
+    private let focusPresets = [15, 20, 25, 30, 45, 50, 60, 90]
+    private let breakPresets = [3, 5, 10, 15]
+
+    var body: some View {
+        Button(pomodoro.runState == .running ? "Pause" : pomodoro.runState == .paused ? "Resume" : "Start") {
+            pomodoro.toggle()
+        }
+        Menu("Focus duration (\(Defaults[.pomodoroWorkMinutes]) min)") {
+            ForEach(focusPresets, id: \.self) { minutes in
+                Button("\(minutes) min") { pomodoro.setFocusMinutes(minutes) }
+            }
+            Divider()
+            Button("Custom…") {
+                pomodoro.promptCustomMinutes(title: "Focus duration", current: Defaults[.pomodoroWorkMinutes]) {
+                    pomodoro.setFocusMinutes($0)
+                }
+            }
+        }
+        Menu("Break duration (\(Defaults[.pomodoroShortBreakMinutes]) min)") {
+            ForEach(breakPresets, id: \.self) { minutes in
+                Button("\(minutes) min") { pomodoro.setShortBreakMinutes(minutes) }
+            }
+            Divider()
+            Button("Custom…") {
+                pomodoro.promptCustomMinutes(title: "Break duration", current: Defaults[.pomodoroShortBreakMinutes]) {
+                    pomodoro.setShortBreakMinutes($0)
+                }
+            }
+        }
+        Divider()
+        Button("Skip phase") { pomodoro.skip() }
+        Button("Reset") { pomodoro.reset() }
     }
 }

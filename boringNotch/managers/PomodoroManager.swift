@@ -90,6 +90,41 @@ final class PomodoroManager: ObservableObject {
         }
     }
 
+    // MARK: - Durations
+
+    /// Sets the focus duration. If a focus phase is in progress it restarts with the new length.
+    func setFocusMinutes(_ minutes: Int) {
+        let clamped = min(max(1, minutes), 240)
+        Defaults[.pomodoroWorkMinutes] = clamped
+        guard phase == .work else { return }
+        switch runState {
+        case .idle: break
+        case .running: begin(after: duration(for: .work))
+        case .paused: remainingWhenPaused = duration(for: .work)
+        }
+        objectWillChange.send()
+    }
+
+    func setShortBreakMinutes(_ minutes: Int) {
+        Defaults[.pomodoroShortBreakMinutes] = min(max(1, minutes), 120)
+        objectWillChange.send()
+    }
+
+    func promptCustomMinutes(title: String, current: Int, onSet: @escaping (Int) -> Void) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = "Minutes (1 to 240)"
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 120, height: 24))
+        field.stringValue = "\(current)"
+        alert.accessoryView = field
+        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: "Cancel")
+        NSApp.activate(ignoringOtherApps: true)
+        if alert.runModal() == .alertFirstButtonReturn, let value = Int(field.stringValue.trimmingCharacters(in: .whitespaces)) {
+            onSet(value)
+        }
+    }
+
     // MARK: - Internals
 
     private func begin(after interval: TimeInterval) {

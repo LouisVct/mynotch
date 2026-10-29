@@ -72,10 +72,7 @@ struct BoringHeader: View {
                                     }
                             }
                             .buttonStyle(PlainButtonStyle())
-                            .contextMenu {
-                                Button("Skip phase") { pomodoro.skip() }
-                                Button("Reset") { pomodoro.reset() }
-                            }
+                            .contextMenu { PomodoroMenuItems(pomodoro: pomodoro) }
                             .help("Pomodoro: click to start or pause, right-click for more")
                         }
                         if Defaults[.settingsIconInNotch] {

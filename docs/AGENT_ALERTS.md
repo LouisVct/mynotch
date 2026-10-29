@@ -55,7 +55,7 @@ relance `install.sh`.
 
 Bouton minuteur dans l'encoche ouverte (clic = démarrer / pause, clic droit = passer / réinitialiser),
 ou via le menu de la barre des menus. Pendant un cycle, un compte à rebours reste sous l'encoche fermée
-(clic = pause, clic droit = passer / réinitialiser). Durées et options dans Réglages > Comportement > Pomodoro.
+(clic = pause, clic droit = passer / réinitialiser). Durées et options dans Réglages > General > Pomodoro.
 
 ## Autres agents (agy, etc.)
 
