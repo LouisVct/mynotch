@@ -131,6 +131,7 @@ extension Defaults.Keys {
     static let showShuffleAndRepeat = Key<Bool>("showShuffleAndRepeat", default: false)
     static let enableLyrics = Key<Bool>("enableLyrics", default: false)
     static let offerConversionOnDrop = Key<Bool>("offerConversionOnDrop", default: true)
+    static let mediaSwipeGestures = Key<Bool>("mediaSwipeGestures", default: true)
     static let artworkCacheSize = Key<Int>("artworkCacheSize", default: 30)
     static let musicControlSlots = Key<[MusicControlButton]>(
         "musicControlSlots",

@@ -24,6 +24,7 @@ struct ContentView: View {
     @ObservedObject var brightnessManager = BrightnessManager.shared
     @ObservedObject var volumeManager = VolumeManager.shared
     @State private var hoverTask: Task<Void, Never>?
+    @State private var mediaSwipeFired = false
     @State private var isHovering: Bool = false
     @State private var anyDropDebounceTask: Task<Void, Never>?
 
@@ -138,6 +139,15 @@ struct ContentView: View {
                         view
                             .panGesture(direction: .down) { translation, phase in
                                 handleDownGesture(translation: translation, phase: phase)
+                            }
+                    }
+                    .conditionalModifier(Defaults[.mediaSwipeGestures] && Defaults[.enableGestures]) { view in
+                        view
+                            .panGesture(direction: .left) { translation, phase in
+                                handleMediaSwipe(translation: translation, phase: phase, next: true)
+                            }
+                            .panGesture(direction: .right) { translation, phase in
+                                handleMediaSwipe(translation: translation, phase: phase, next: false)
                             }
                     }
                     .conditionalModifier(Defaults[.closeGestureEnabled] && Defaults[.enableGestures]) { view in
@@ -583,6 +593,27 @@ struct ContentView: View {
                 gestureProgress = .zero
             }
             doOpen()
+        }
+    }
+
+    private func handleMediaSwipe(translation: CGFloat, phase: NSEvent.Phase, next: Bool) {
+        guard vm.notchState == .closed else { return }
+
+        if phase == .ended {
+            mediaSwipeFired = false
+            return
+        }
+
+        // One track change per swipe
+        guard !mediaSwipeFired, translation > Defaults[.gestureSensitivity] else { return }
+        mediaSwipeFired = true
+        if Defaults[.enableHaptics] {
+            haptics.toggle()
+        }
+        if next {
+            MusicManager.shared.nextTrack()
+        } else {
+            MusicManager.shared.previousTrack()
         }
     }
 
