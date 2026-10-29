@@ -23,24 +23,16 @@ open -g 'mynotch://agent?name=Test&message=Ça%20marche&state=input'
 
 ## Claude Code
 
-Dans `~/.claude/settings.json`, ajoute (ou fusionne avec tes `hooks` existants) :
+Les hooks sont dans le repo : [integrations/claude-code/hooks.json](../integrations/claude-code/hooks.json).
+Pour les installer dans `~/.claude/settings.json` (sans toucher au reste, sans doublon, avec une sauvegarde
+`settings.json.bak-mynotch`) :
 
-```json
-{
-  "hooks": {
-    "Notification": [
-      { "hooks": [ { "type": "command",
-        "command": "open -g 'mynotch://agent?name=Claude%20Code&message=Needs%20your%20attention&state=input'" } ] }
-    ],
-    "Stop": [
-      { "hooks": [ { "type": "command",
-        "command": "open -g 'mynotch://agent?name=Claude%20Code&message=Finished&state=done'" } ] }
-    ]
-  }
-}
+```bash
+./integrations/claude-code/install.sh
 ```
 
-`Notification` se déclenche quand Claude attend une permission ou ta réponse, `Stop` quand il a fini.
+- `Notification` : Claude attend une permission ou ta réponse (bannière orange)
+- `Stop` : Claude a fini (bannière verte)
 
 ## Autres agents (agy, etc.)
 
