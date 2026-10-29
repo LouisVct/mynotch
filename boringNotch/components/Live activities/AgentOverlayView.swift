@@ -35,8 +35,11 @@ struct AgentBadge: View {
         }
         .font(.system(size: 13))
         .contentShape(Rectangle())
-        .onTapGesture {
-            withAnimation(.smooth) { agents.isListExpanded.toggle() }
+        .onTapGesture { agents.primaryAction() }
+        .contextMenu {
+            Button(agents.isListExpanded ? "Hide sessions" : "Show sessions") {
+                withAnimation(.smooth) { agents.isListExpanded.toggle() }
+            }
         }
         .help("AI agents")
     }
@@ -137,8 +140,11 @@ private struct AgentPill: View {
         .background(.black, in: Capsule())
         .overlay(Capsule().stroke(Color.white.opacity(0.12)))
         .contentShape(Capsule())
-        .onTapGesture {
-            withAnimation(.smooth) { agents.isListExpanded.toggle() }
+        .onTapGesture { agents.primaryAction() }
+        .contextMenu {
+            Button(agents.isListExpanded ? "Hide sessions" : "Show sessions") {
+                withAnimation(.smooth) { agents.isListExpanded.toggle() }
+            }
         }
     }
 }

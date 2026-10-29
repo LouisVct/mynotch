@@ -85,6 +85,17 @@ final class AgentSessionManager: ObservableObject {
         }
     }
 
+    /// Tap on the agent badge: with one session, go straight to its window (like tapping a Live Activity
+    /// on the iPhone). With several, show the list so you can pick one.
+    func primaryAction() {
+        if sessions.count == 1, let session = sessions.first, session.terminalBundleID != nil {
+            AgentTerminal.activate(bundleID: session.terminalBundleID)
+            if session.state == .done { end(id: session.id) }
+        } else {
+            withAnimation(.smooth) { isListExpanded.toggle() }
+        }
+    }
+
     func end(id: String) {
         withAnimation(.smooth) {
             sessions.removeAll { $0.id == id }
