@@ -366,7 +366,7 @@ struct GeneralSettings: View {
                 Text("Add a break after each focus (Pomodoro)")
             }
             Defaults.Toggle(key: .pomodoroAutoStartNext) {
-                Text("Start the next phase automatically")
+                Text("Chain focus and breaks automatically")
             }
             Defaults.Toggle(key: .pomodoroSound) {
                 Text("Play a sound when a phase ends")

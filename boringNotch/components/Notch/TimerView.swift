@@ -2,8 +2,11 @@
 //  TimerView.swift
 //  boringNotch
 //
-//  Timer panel of the open notch. Modeled on the iPhone Timer: orange, big countdown,
-//  pause and cancel buttons while it runs, quick presets when it's idle.
+//  Timer panel of the open notch. Orange like the iPhone Timer, with two modes:
+//  - Timer: a plain countdown with quick presets
+//  - Pomodoro: focus / short break / long break cycles shown as dots, optional task name,
+//    phases chained automatically
+//  Presets only choose the length; the play button starts.
 //
 
 import Defaults
@@ -17,12 +20,10 @@ extension Color {
 struct TimerView: View {
     @ObservedObject var pomodoro = PomodoroManager.shared
     @Default(.pomodoroWorkMinutes) private var focusMinutes
-    @Default(.pomodoroBreaks) private var breaks
+    @Default(.pomodoroBreaks) private var pomodoroMode
+    @Default(.pomodoroTask) private var task
 
-    private var presets: [Int] { breaks ? [15, 20, 25, 30, 45, 50] : [1, 5, 10, 15, 30, 45, 60] }
-    @Default(.pomodoroShortBreakMinutes) private var shortBreak
-    @Default(.pomodoroLongBreakMinutes) private var longBreak
-    @Default(.pomodoroCyclesBeforeLongBreak) private var cycles
+    private var presets: [Int] { pomodoroMode ? [15, 20, 25, 30, 45, 50] : [1, 5, 10, 15, 30, 45, 60] }
 
     var body: some View {
         Group {
@@ -36,9 +37,9 @@ struct TimerView: View {
         .padding(.vertical, 6)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .animation(.smooth, value: pomodoro.runState)
-        .onChange(of: breaks) {
+        .onChange(of: pomodoroMode) {
             // Leaving Pomodoro mode while a break is pending: back to a plain focus length
-            if !breaks && pomodoro.phase != .work { pomodoro.reset() }
+            if !pomodoroMode && pomodoro.phase != .work { pomodoro.reset() }
         }
     }
 
@@ -46,14 +47,18 @@ struct TimerView: View {
 
     private var idleView: some View {
         HStack(spacing: 16) {
-            VStack(alignment: .leading, spacing: 8) {
-                Picker("", selection: $breaks) {
-                    Text("Timer").tag(false)
-                    Text("Pomodoro").tag(true)
+            VStack(alignment: .leading, spacing: 7) {
+                HStack(spacing: 12) {
+                    Picker("", selection: $pomodoroMode) {
+                        Text("Timer").tag(false)
+                        Text("Pomodoro").tag(true)
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .frame(width: 170)
+
+                    if pomodoroMode { CycleDots(pomodoro: pomodoro) }
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .frame(maxWidth: 190)
 
                 if pomodoro.phase == .work {
                     HStack(spacing: 10) {
@@ -81,7 +86,7 @@ struct TimerView: View {
                     }
                     .scrollIndicators(.never)
                 } else {
-                    // Pomodoro: a break is waiting after a focus session
+                    // A break is waiting after a focus session
                     Text(pomodoro.phase.title)
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color.timerOrange)
@@ -91,7 +96,7 @@ struct TimerView: View {
                         .foregroundStyle(Color.timerOrange)
                 }
 
-                if breaks { pomodoroSummary }
+                if pomodoroMode { taskField }
             }
 
             Spacer(minLength: 0)
@@ -101,7 +106,7 @@ struct TimerView: View {
                     pomodoro.start()
                 }
                 .help("Start")
-                if breaks && pomodoro.phase != .work {
+                if pomodoroMode && pomodoro.phase != .work {
                     Button("Skip break") { pomodoro.skip() }
                         .buttonStyle(.plain)
                         .font(.system(size: 11))
@@ -111,21 +116,14 @@ struct TimerView: View {
         }
     }
 
-    /// "Focus 25 · Break 5 · Long 15 (every 4)" with one dot per focus session of the current round.
-    private var pomodoroSummary: some View {
-        HStack(spacing: 8) {
-            HStack(spacing: 4) {
-                ForEach(0..<max(1, cycles), id: \.self) { index in
-                    Circle()
-                        .fill(index < pomodoro.completedWorkSessions % max(1, cycles)
-                              ? Color.timerOrange : Color.white.opacity(0.2))
-                        .frame(width: 7, height: 7)
-                }
-            }
-            Text("Focus \(focusMinutes) · Break \(shortBreak) · Long \(longBreak)")
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
-        }
+    private var taskField: some View {
+        TextField("What are you working on?", text: $task)
+            .textFieldStyle(.plain)
+            .font(.system(size: 12))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Color.white.opacity(0.1), in: Capsule())
+            .frame(maxWidth: 260)
     }
 
     // MARK: - Running / paused: countdown and controls
@@ -133,15 +131,19 @@ struct TimerView: View {
     private var runningView: some View {
         HStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 5) {
-                    Image(systemName: "timer")
-                    Text(pomodoro.phase.title)
-                    if pomodoro.runState == .paused {
-                        Text("· Paused").foregroundStyle(.secondary)
+                HStack(spacing: 8) {
+                    HStack(spacing: 5) {
+                        Image(systemName: "timer")
+                        Text(headline).lineLimit(1)
+                        if pomodoro.runState == .paused {
+                            Text("· Paused").foregroundStyle(.secondary)
+                        }
                     }
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.timerOrange)
+
+                    if pomodoroMode { CycleDots(pomodoro: pomodoro) }
                 }
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(Color.timerOrange)
 
                 countdown
                     .font(.system(size: 52, weight: .medium, design: .rounded))
@@ -159,22 +161,36 @@ struct TimerView: View {
 
             Spacer(minLength: 0)
 
-            HStack(spacing: 14) {
-                // Cancel: stops the timer and goes back to the presets
-                roundButton("xmark", fill: Color.white.opacity(0.18), tint: .white, size: 48) {
+            HStack(spacing: 12) {
+                // Cancel: stops everything and goes back to the start
+                roundButton("xmark", fill: Color.white.opacity(0.18), tint: .white, size: 44) {
                     pomodoro.reset()
                 }
                 .help("Cancel")
 
+                if pomodoroMode {
+                    roundButton("forward.end.fill", fill: Color.white.opacity(0.18), tint: .white, size: 44) {
+                        pomodoro.skip()
+                    }
+                    .help("Next phase")
+                }
+
                 roundButton(
                     pomodoro.runState == .running ? "pause.fill" : "play.fill",
-                    fill: Color.timerOrange.opacity(0.3), tint: Color.timerOrange, size: 48
+                    fill: Color.timerOrange.opacity(0.3), tint: Color.timerOrange, size: 44
                 ) {
                     pomodoro.toggle()
                 }
                 .help(pomodoro.runState == .running ? "Pause" : "Resume")
             }
         }
+    }
+
+    /// "Focus · Reply to emails" in Pomodoro mode, just the phase otherwise.
+    private var headline: String {
+        let name = task.trimmingCharacters(in: .whitespaces)
+        if pomodoroMode && pomodoro.phase == .work && !name.isEmpty { return name }
+        return pomodoro.phase.title
     }
 
     @ViewBuilder
@@ -199,6 +215,34 @@ struct TimerView: View {
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// One dot per focus session of the round: filled = done, half = the one in progress, empty = to come.
+struct CycleDots: View {
+    @ObservedObject var pomodoro: PomodoroManager
+
+    var body: some View {
+        HStack(spacing: 5) {
+            ForEach(0..<pomodoro.cycleTotal, id: \.self) { index in
+                let done = index < pomodoro.cycleDone
+                let current = index == pomodoro.cycleDone && pomodoro.phase == .work && pomodoro.isActive
+                Circle()
+                    .fill(done ? Color.timerOrange : Color.white.opacity(0.2))
+                    .overlay {
+                        if current {
+                            // Left half filled: the session being worked on
+                            Rectangle()
+                                .fill(Color.timerOrange)
+                                .frame(width: 4)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }
+                    .clipShape(Circle())
+                    .frame(width: 8, height: 8)
+            }
+        }
+        .help("Focus sessions before the long break")
     }
 }
 

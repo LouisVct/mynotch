@@ -200,7 +200,7 @@ class BoringViewModel: NSObject, ObservableObject {
             return hasSidePanel ? openNotchSize : CGSize(width: 500, height: 170)
         case .timer:
             // The picker (presets, modes) needs more height than the running countdown
-            return CGSize(width: 440, height: PomodoroManager.shared.runState == .idle ? 185 : 150)
+            return CGSize(width: 440, height: PomodoroManager.shared.runState == .idle ? 190 : 150)
         case .shelf:
             return openNotchSize
         }

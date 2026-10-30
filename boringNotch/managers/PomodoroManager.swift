@@ -39,6 +39,12 @@ final class PomodoroManager: ObservableObject {
 
     var isActive: Bool { runState != .idle }
 
+    /// Focus sessions per round (a long break follows the last one).
+    var cycleTotal: Int { max(1, Defaults[.pomodoroCyclesBeforeLongBreak]) }
+
+    /// Focus sessions done in the current round; the whole round counts as done during the long break.
+    var cycleDone: Int { phase == .longBreak ? cycleTotal : completedWorkSessions % cycleTotal }
+
     /// Length of the phase currently selected (focus or break).
     var currentPhaseDuration: TimeInterval { duration(for: phase) }
 
