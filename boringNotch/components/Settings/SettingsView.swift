@@ -140,12 +140,19 @@ struct GeneralSettings: View {
     @Default(.enableGestures) var enableGestures
     @Default(.openNotchOnHover) var openNotchOnHover
     @Default(.sideEntryExtraDelay) var sideEntryExtraDelay
-    @Default(.appLanguage) var appLanguage
+    @Default(.appLanguage) var appLanguage // re-renders this view when the language changes
     @Default(.pomodoroWorkMinutes) var pomodoroWork
     @Default(.pomodoroShortBreakMinutes) var pomodoroShortBreak
     @Default(.pomodoroLongBreakMinutes) var pomodoroLongBreak
     @Default(.pomodoroCyclesBeforeLongBreak) var pomodoroCycles
     
+
+    private func languageLabel(_ language: AppLanguage) -> Text {
+        if let name = language.nativeName {
+            return Text(verbatim: name)
+        }
+        return Text("System default")
+    }
 
     var body: some View {
         Form {
@@ -158,17 +165,16 @@ struct GeneralSettings: View {
                 }
                 .tint(.effectiveAccent)
                 LaunchAtLogin.Toggle("Launch at login")
-                Picker("Language", selection: $appLanguage) {
-                    ForEach(AppLanguage.allCases) { language in
-                        if let name = language.nativeName {
-                            Text(verbatim: name).tag(language)
-                        } else {
-                            Text("System default").tag(language)
-                        }
+                Picker("Language", selection: Binding(
+                    get: { Defaults[.appLanguage] },
+                    set: { newValue in
+                        Defaults[.appLanguage] = newValue
+                        newValue.persistForSystem()
                     }
-                }
-                .onChange(of: appLanguage) { _, newValue in
-                    newValue.persistForSystem()
+                )) {
+                    ForEach(AppLanguage.allCases, id: \.self) { language in
+                        languageLabel(language).tag(language)
+                    }
                 }
                 Defaults.Toggle(key: .showOnAllDisplays) {
                     Text("Show on all displays")
