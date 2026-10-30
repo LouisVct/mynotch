@@ -92,15 +92,7 @@ struct SettingsView: View {
                 case "Advanced":
                     Advanced()
                 case "About":
-                    if let controller = updaterController {
-                        About(updaterController: controller)
-                    } else {
-                        // Fallback with a default controller
-                        About(
-                            updaterController: SPUStandardUpdaterController(
-                                startingUpdater: false, updaterDelegate: nil,
-                                userDriverDelegate: nil))
-                    }
+                    About()
                 default:
                     GeneralSettings()
                 }
@@ -929,36 +921,54 @@ func lighterColor(from nsColor: NSColor, amount: CGFloat = 0.14) -> Color {
 }
 
 struct About: View {
-    @State private var showBuildNumber: Bool = false
-    let updaterController: SPUStandardUpdaterController
-    @Environment(\.openWindow) var openWindow
+    @State private var copied = false
+
+    /// Same command as `integrations/update-mynotch.sh`, runnable from anywhere.
+    private let updateCommand =
+        "curl -fsSL https://raw.githubusercontent.com/LouisVct/mynotch/main/integrations/update-mynotch.sh | bash"
+
     var body: some View {
         VStack {
             Form {
                 Section {
                     HStack {
-                        Text("Release name")
+                        Text("Version")
                         Spacer()
-                        Text(Defaults[.releaseName])
+                        Text("Build \(Bundle.main.buildVersionNumber ?? "?")")
                             .foregroundStyle(.secondary)
                     }
                     HStack {
-                        Text("Version")
+                        Text("Based on boring.notch")
                         Spacer()
-                        if showBuildNumber {
-                            Text("(\(Bundle.main.buildVersionNumber ?? ""))")
-                                .foregroundStyle(.secondary)
-                        }
-                        Text(Bundle.main.releaseVersionNumber ?? "unkown")
+                        Text(Bundle.main.releaseVersionNumber ?? "?")
                             .foregroundStyle(.secondary)
-                    }
-                    .onTapGesture {
-                        withAnimation {
-                            showBuildNumber.toggle()
-                        }
                     }
                 } header: {
                     Text("Version info")
+                }
+
+                Section {
+                    Text("To update, run this command in Terminal:")
+                        .foregroundStyle(.secondary)
+                    HStack(alignment: .top, spacing: 10) {
+                        Text(verbatim: updateCommand)
+                            .font(.system(.callout, design: .monospaced))
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .environment(\.layoutDirection, .leftToRight)
+                        Button {
+                            NSPasteboard.general.clearContents()
+                            NSPasteboard.general.setString(updateCommand, forType: .string)
+                            copied = true
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) { copied = false }
+                        } label: {
+                            Label(copied ? "Copied" : "Copy", systemImage: copied ? "checkmark" : "doc.on.doc")
+                        }
+                    }
+                    .padding(10)
+                    .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
+                } header: {
+                    Text("Update")
                 }
 
                 HStack(spacing: 30) {
@@ -983,7 +993,7 @@ struct About: View {
             }
             VStack(spacing: 0) {
                 Divider()
-                Text("Made with 🫶🏻 by not so boring not.people")
+                Text("MyNotch is a personal fork of boring.notch (GPL-3.0)")
                     .foregroundStyle(.secondary)
                     .padding(.top, 5)
                     .padding(.bottom, 7)

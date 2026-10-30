@@ -33,8 +33,10 @@ The app is only ad-hoc signed: on first launch, right-click the app and choose *
 There is no in-app updater. To update, run:
 
 ```bash
-integrations/update-mynotch.sh
+curl -fsSL https://raw.githubusercontent.com/LouisVct/mynotch/main/integrations/update-mynotch.sh | bash
 ```
+
+The same command is shown, with a copy button, in Settings > About.
 
 ## License
 
