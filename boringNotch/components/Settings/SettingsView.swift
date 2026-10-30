@@ -148,6 +148,7 @@ struct GeneralSettings: View {
     @Default(.enableGestures) var enableGestures
     @Default(.openNotchOnHover) var openNotchOnHover
     @Default(.sideEntryExtraDelay) var sideEntryExtraDelay
+    @Default(.appLanguage) var appLanguage
     @Default(.pomodoroWorkMinutes) var pomodoroWork
     @Default(.pomodoroShortBreakMinutes) var pomodoroShortBreak
     @Default(.pomodoroLongBreakMinutes) var pomodoroLongBreak
@@ -165,6 +166,18 @@ struct GeneralSettings: View {
                 }
                 .tint(.effectiveAccent)
                 LaunchAtLogin.Toggle("Launch at login")
+                Picker("Language", selection: $appLanguage) {
+                    ForEach(AppLanguage.allCases) { language in
+                        if let name = language.nativeName {
+                            Text(verbatim: name).tag(language)
+                        } else {
+                            Text("System default").tag(language)
+                        }
+                    }
+                }
+                .onChange(of: appLanguage) { _, newValue in
+                    newValue.persistForSystem()
+                }
                 Defaults.Toggle(key: .showOnAllDisplays) {
                     Text("Show on all displays")
                 }

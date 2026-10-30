@@ -143,6 +143,7 @@ extension Defaults.Keys {
     static let pomodoroTask = Key<String>("pomodoroTask", default: "")
     static let pomodoroSound = Key<Bool>("pomodoroSound", default: true)
     static let showPomodoroButton = Key<Bool>("showPomodoroButton", default: true)
+    static let appLanguage = Key<AppLanguage>("appLanguage", default: .system)
     static let adaptOpenNotchSize = Key<Bool>("adaptOpenNotchSize", default: true)
     static let artworkCacheSize = Key<Int>("artworkCacheSize", default: 30)
     static let musicControlSlots = Key<[MusicControlButton]>(

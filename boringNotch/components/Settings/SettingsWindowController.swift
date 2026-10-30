@@ -59,7 +59,7 @@ class SettingsWindowController: NSWindowController {
         
         // Create the SwiftUI content
         let settingsView = SettingsView(updaterController: updaterController)
-        let hostingView = NSHostingView(rootView: settingsView)
+        let hostingView = NSHostingView(rootView: LanguageEnvironment { settingsView })
         window.contentView = hostingView
         
         // Handle window closing

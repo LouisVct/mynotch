@@ -253,8 +253,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         window.contentView = NSHostingView(
-            rootView: ContentView()
-                .environmentObject(viewModel)
+            rootView: LanguageEnvironment(mirrorsLayout: false) {
+                ContentView()
+                    .environmentObject(viewModel)
+            }
         )
 
         window.orderFrontRegardless()
@@ -633,19 +635,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             window.titlebarAppearsTransparent = true
             window.titleVisibility = .hidden
             window.contentView = NSHostingView(
-                rootView: OnboardingView(
-                    step: step,
-                    onFinish: {
-                        window.orderOut(nil)
-//                        NSApp.setActivationPolicy(.accessory)
-                        window.close()
-                        NSApp.deactivate()
-                    },
-                    onOpenSettings: {
-                        window.close()
-                        SettingsWindowController.shared.showWindow()
-                    }
-                ))
+                rootView: LanguageEnvironment {
+                    OnboardingView(
+                        step: step,
+                        onFinish: {
+                            window.orderOut(nil)
+//                            NSApp.setActivationPolicy(.accessory)
+                            window.close()
+                            NSApp.deactivate()
+                        },
+                        onOpenSettings: {
+                            window.close()
+                            SettingsWindowController.shared.showWindow()
+                        }
+                    )
+                })
             window.isRestorable = false
             window.identifier = NSUserInterfaceItemIdentifier("OnboardingWindow")
 
