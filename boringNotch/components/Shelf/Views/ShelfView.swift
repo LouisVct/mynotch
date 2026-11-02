@@ -75,6 +75,23 @@ struct ShelfView: View {
             }
             .contentShape(Rectangle())
             .onTapGesture { selection.clear() }
+            .overlay(alignment: .topTrailing) {
+                if !tvm.isEmpty {
+                    Button {
+                        selection.clear()
+                        withAnimation(.smooth) { tvm.removeAll() }
+                    } label: {
+                        Image(systemName: "trash")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.white.opacity(0.85))
+                            .frame(width: 24, height: 24)
+                            .background(Circle().fill(Color.white.opacity(0.15)))
+                    }
+                    .buttonStyle(.plain)
+                    .help("Clear all files")
+                    .padding(6)
+                }
+            }
             .overlay(alignment: .bottom) {
                 if let offer = tvm.conversionOffer {
                     ConversionOfferView(tvm: tvm, offer: offer)

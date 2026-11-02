@@ -26234,6 +26234,28 @@
           }
         }
       }
+    },
+    "Clear all files" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vider les fichiers"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rensa alla filer"
+          }
+        },
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مسح كل الملفات"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

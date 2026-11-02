@@ -57,6 +57,12 @@ final class ShelfStateViewModel: ObservableObject {
         items.removeAll { $0.id == item.id }
     }
 
+    func removeAll() {
+        items.forEach { $0.cleanupStoredData() }
+        items.removeAll()
+        dismissConversionOffer()
+    }
+
     func updateBookmark(for item: ShelfItem, bookmark: Data) {
         guard let idx = items.firstIndex(where: { $0.id == item.id }) else { return }
         if case .file = items[idx].kind {
